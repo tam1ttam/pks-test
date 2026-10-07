@@ -1,0 +1,44 @@
+# Dependencies and generated output
+# Match dependencies in frontend, backend and local documentation tools
+**/node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+.turbo/
+.tmp/
+tmp/
+*.tsbuildinfo
+assets/docs/
+/serve.html
+/serve.json
+/scripts/
+
+# Secrets (keep templates)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+
+# Logs and local tooling
+*.log
+npm-debug.log*
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.agents/
+.codex/
+.aws/
+
+# Local notes; keep README at any level and in any letter case
+*.[tT][xX][tT]
+*.[mM][dD]
+![rR][eE][aA][dD][mM][eE].[mM][dD]
+
+*.pdf

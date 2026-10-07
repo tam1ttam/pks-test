@@ -1,0 +1,13 @@
+{
+    "private":  true,
+    "name":  "pks-course-portal",
+    "version":  "0.1.0",
+    "scripts":  {
+                    "build":  "npm --prefix frontend run build \u0026\u0026 npm --prefix backend run build",
+                    "dev:backend":  "npm --prefix backend run start:dev",
+                    "typecheck":  "npm --prefix frontend run typecheck \u0026\u0026 npm --prefix backend run typecheck",
+                    "docs":  "node scripts/node_modules/serve/build/main.js -l tcp://127.0.0.1:3003",
+                    "dev:frontend":  "npm --prefix frontend run dev",
+                    "test:integration":  "npm --prefix backend run test:integration"
+                }
+}
