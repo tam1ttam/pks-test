@@ -6,7 +6,7 @@ import type { User } from '../../database/entities/user.entity';
 export class UsersService {
   constructor(private readonly users: UsersRepository) {}
   publicUser(user: User) {
-    return { id: user.id, fullName: user.fullName, email: user.email, role: user.role, createdAt: user.createdAt };
+    return { id: user.id, fullName: user.fullName, email: user.email, role: user.role, isActive: user.isActive, createdAt: user.createdAt };
   }
   async update(id: string, fullName: string) {
     const user = await this.users.updateName(id, fullName);
