@@ -12,7 +12,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = host.switchToHttp().getRequest<Request>();
     host.switchToHttp().getResponse<Response>().status(status).json({
       statusCode: status,
-      message: status >= 500 ? 'Hệ thống tạm thời không khả dụng. Vui lòng thử lại.' : message,
+      message: exception instanceof HttpException ? message : 'Hệ thống tạm thời không khả dụng. Vui lòng thử lại.',
       path: request.path,
       timestamp: new Date().toISOString(),
     });

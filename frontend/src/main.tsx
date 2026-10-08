@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './styles/global.css';
-import { I18nProvider } from './i18n';
+import { ToastViewport } from './components/common/Toast';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <I18nProvider><BrowserRouter><App /></BrowserRouter></I18nProvider>
+    <BrowserRouter><App /><ToastViewport /></BrowserRouter>
   </React.StrictMode>,
 );

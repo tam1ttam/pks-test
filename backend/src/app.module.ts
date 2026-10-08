@@ -12,13 +12,15 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration, databaseConfig, jwtConfig], validate: validateEnvironment }),
     TypeOrmModule.forRootAsync({ useFactory: () => ({ ...databaseOptions(), retryAttempts: 1 }) }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 120 }]),
-    UsersModule, AuthModule, CoursesModule, EnrollmentsModule,
+    UsersModule, AuthModule, CoursesModule, EnrollmentsModule, UploadsModule, CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

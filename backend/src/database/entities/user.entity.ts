@@ -13,6 +13,7 @@ export class User {
   @Column({ name: 'google_id', type: 'varchar', unique: true, nullable: true, select: false }) googleId!: string | null;
   @Column({ type: 'varchar', length: 16, default: 'STUDENT' }) role!: UserRole;
   @Column({ name: 'is_active', default: true }) isActive!: boolean;
+  @Column({ name: 'avatar_url', type: 'varchar', length: 1000, nullable: true }) avatarUrl!: string | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
   @OneToMany(() => Enrollment, enrollment => enrollment.student) enrollments!: Enrollment[];

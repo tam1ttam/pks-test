@@ -163,15 +163,18 @@ test('Enrollment CRUD: ownership, counts, cancellation, restoration, protected h
   await call('patch', `/admin/users/${users.s1.code}`).send({ role: 'ADMIN' }).expect(409);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED', courseCode: randomUUID() }).expect(400);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'INVALID' }).expect(400);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED' }).expect(200);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED' }).expect(200);
+  await call('post', `/enrollments/${id}/cancel-request`, 's1').expect(201);
+  const pending = await call('get', `/enrollments/${id}`, 's1').expect(200);
+  assert.equal(pending.body.status, 'CANCEL_REQUESTED');
+  await call('patch', `/enrollments/${id}`).send({ status: 'CANCELLED' }).expect(200);
+  await call('patch', `/enrollments/${id}`).send({ status: 'CANCELLED' }).expect(200);
   assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
   await call('patch', `/admin/courses/${course.code}`).send({ isPublished: false }).expect(200);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(409);
+  await call('patch', `/enrollments/${id}`).send({ status: 'ENROLLED' }).expect(409);
   await call('get', `/enrollments/${id}`, 's1').expect(200);
   await call('patch', `/admin/courses/${course.code}`).send({ isPublished: true }).expect(200);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(200);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(200);
+  await call('patch', `/enrollments/${id}`).send({ status: 'ENROLLED' }).expect(200);
+  await call('patch', `/enrollments/${id}`).send({ status: 'ENROLLED' }).expect(200);
   await call('delete', `/enrollments/${id}`).expect(204);
   await call('get', `/enrollments/${id}`).expect(404);
   assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
@@ -185,6 +188,19 @@ test('Enrollment race: only one student can take the last seat', async () => {
   assert.deepEqual(results.map(result => result.status).sort(), [201, 409, 409]);
   await countMatches();
   console.log('[PASS] 3 simultaneous students -> exactly one successful last-seat enrollment');
+});
+
+test('Student can re-enroll one minute after an approved cancellation', async () => {
+  const course = await createCourse('Re-enrollment cooldown', { capacity: 2 });
+  const created = await call('post', '/enrollments', 's2').send({ courseCode: course.code }).expect(201);
+  await call('post', `/enrollments/${created.body.code}/cancel-request`, 's2').expect(201);
+  await call('patch', `/enrollments/${created.body.code}`).send({ status: 'CANCELLED' }).expect(200);
+  await call('post', `/enrollments/${created.body.code}/reenroll`, 's2').expect(409);
+  await db.query(`UPDATE enrollments SET updated_at = now() - interval '61 seconds' WHERE code = $1`, [created.body.code]);
+  const restored = await call('post', `/enrollments/${created.body.code}/reenroll`, 's2').expect(201);
+  assert.equal(restored.body.status, 'ENROLLED');
+  assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 1);
+  console.log('[PASS] cancelled enrollment enforces a one-minute re-enrollment cooldown');
 });
 
 test('Duplicate requests and simultaneous capacity change preserve constraints', async () => {
@@ -241,8 +257,9 @@ test('Injected failure after enrollment insert rolls back both enrollment and co
 test('Concurrent cancellation/deletion does not decrement count twice', async () => {
   const course = await createCourse('Cancel Race');
   const created = await call('post', '/enrollments', 's3').send({ courseCode: course.code }).expect(201);
+  await call('post', `/enrollments/${created.body.code}/cancel-request`, 's3').expect(201);
   const results = await Promise.all([
-    call('patch', `/enrollments/${created.body.code}`, 's3').send({ status: 'CANCELLED' }),
+    call('patch', `/enrollments/${created.body.code}`).send({ status: 'CANCELLED' }),
     call('delete', `/enrollments/${created.body.code}`),
   ]);
   assert.ok(results.every(response => [200, 204, 404].includes(response.status)));

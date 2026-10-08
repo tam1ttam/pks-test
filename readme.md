@@ -75,6 +75,8 @@ Seed có 3 khóa (React còn chỗ, MOS Excel đầy, NestJS ẩn) và 3 ghi dan
 
 Backend chạy ở http://localhost:3030/api. `PORT` trong `.env` điều khiển cổng; `GET /api` giữ response mẫu `Hello World!`.
 
+Ảnh đại diện và ảnh khóa học được upload qua backend tới Cloudinary. Cấu hình `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` trong `backend/.env`; không đưa API secret vào frontend. Endpoint `POST /api/uploads/image` nhận field multipart `file`, yêu cầu đăng nhập, tối đa 5 MB và chỉ chấp nhận JPEG/PNG/WEBP.
+
 Nhấn `Ctrl+C` trong terminal tương ứng để dừng. Sau lần cài đầu, chỉ cần chạy lệnh khởi động trong từng thư mục. Trên clone có lockfile, dùng `npm ci` để cài đúng phiên bản đã khóa.
 
 ## Kiểm tra và build

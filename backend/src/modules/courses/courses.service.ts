@@ -8,19 +8,31 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseQueryDto } from './dto/course-query.dto';
 import { rethrowDatabaseError } from '../../common/utils/database-error';
 import { createCode } from '../../common/utils/code';
+import { Category } from '../../database/entities/category.entity';
 
 @Injectable()
 export class CoursesService {
   constructor(private readonly db: DataSource) {}
+  private async resolveCategory(categoryCode?: string, categoryName?: string) {
+    const repository = this.db.getRepository(Category);
+    if (categoryCode) {
+      const category = await repository.findOneBy({ code: categoryCode, isActive: true });
+      if (!category) throw new NotFoundException('Không tìm thấy danh mục.');
+      return category;
+    }
+    const name = categoryName!.trim();
+    const existing = await repository.createQueryBuilder('category').where('LOWER(category.name) = LOWER(:name)', { name }).getOne();
+    return existing || repository.save(repository.create({ id: randomUUID(), code: createCode('CAT'), name, isActive: true }));
+  }
   present(course: Course) {
-    return { code: course.code, name: course.name, category: course.category, instructor: course.instructor, shortDescription: course.shortDescription, description: course.description, tuition: course.tuition, capacity: course.capacity, enrolledCount: course.enrolledCount, isPublished: course.isPublished, availability: course.enrolledCount < course.capacity ? 'AVAILABLE' : 'FULL', createdAt: course.createdAt, updatedAt: course.updatedAt };
+    return { code: course.code, name: course.name, categoryCode: course.categoryCode, category: course.category, instructor: course.instructor, shortDescription: course.shortDescription, description: course.description, tuition: course.tuition, capacity: course.capacity, enrolledCount: course.enrolledCount, isPublished: course.isPublished, imageUrl: course.imageUrl, availability: course.enrolledCount < course.capacity ? 'AVAILABLE' : 'FULL', createdAt: course.createdAt, updatedAt: course.updatedAt };
   }
   async list(query: CourseQueryDto, admin = false) {
     const qb = this.db.getRepository(Course).createQueryBuilder('course');
     if (!admin) qb.andWhere('course.isPublished = true');
     else if (query.isPublished !== undefined) qb.andWhere('course.isPublished = :published', { published: query.isPublished });
     if (query.search) qb.andWhere('course.name ILIKE :search', { search: `%${query.search}%` });
-    if (query.category) qb.andWhere('LOWER(course.category) = LOWER(:category)', { category: query.category });
+    if (query.category) qb.andWhere('(course.categoryCode = :category OR LOWER(course.category) = LOWER(:category))', { category: query.category });
     const [items, total] = await qb.orderBy('course.createdAt', 'DESC').addOrderBy('course.id', 'ASC').skip((query.page - 1) * query.limit).take(query.limit).getManyAndCount();
     return { items: items.map(item => this.present(item)), total, page: query.page, limit: query.limit };
   }
@@ -31,7 +43,8 @@ export class CoursesService {
   }
   async create(dto: CreateCourseDto) {
     const repository = this.db.getRepository(Course);
-    return this.present(await repository.save(repository.create({ ...dto, id: randomUUID(), code: createCode('CRS'), enrolledCount: 0 })));
+    const category = await this.resolveCategory(dto.categoryCode, dto.category);
+    return this.present(await repository.save(repository.create({ ...dto, category: category.name, categoryCode: category.code, id: randomUUID(), code: createCode('CRS'), enrolledCount: 0 })));
   }
   async update(code: string, dto: UpdateCourseDto) {
     try {
@@ -39,7 +52,13 @@ export class CoursesService {
         const course = await manager.findOne(Course, { where: { code }, lock: { mode: 'pessimistic_write' } });
         if (!course) throw new NotFoundException('Không tìm thấy khóa học.');
         if (dto.capacity !== undefined && dto.capacity < course.enrolledCount) throw new ConflictException('Sĩ số tối đa không được thấp hơn số học viên đang ghi danh.');
-        Object.assign(course, dto);
+        if (dto.categoryCode || dto.category) {
+          const category = await this.resolveCategory(dto.categoryCode, dto.category);
+          course.category = category.name;
+          course.categoryCode = category.code;
+        }
+        const { category, categoryCode, ...changes } = dto;
+        Object.assign(course, changes);
         return this.present(await manager.save(course));
       });
     } catch (error) { rethrowDatabaseError(error); }

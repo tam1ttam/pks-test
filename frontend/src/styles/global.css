@@ -5,7 +5,7 @@ body { margin: 0; min-width: 320px; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 a { color: #266445; text-underline-offset: 4px; }
-button:disabled { cursor: wait; opacity: .6; }
+button:disabled { cursor: not-allowed; opacity: .6; }
 :focus-visible { outline: 3px solid #b6904c; outline-offset: 4px; }
 .auth-shell { display: grid; grid-template-columns: minmax(350px, .95fr) minmax(480px, 1.05fr); min-height: 100dvh; padding: 18px; gap: 18px; }
 .auth-intro { border-radius: 22px; padding: clamp(28px, 4.5vw, 72px); background: #1b4537; color: #f1f3e7; display: flex; flex-direction: column; justify-content: space-between; gap: 70px; position: relative; overflow: hidden; }
@@ -39,7 +39,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .google-button { display: flex; justify-content: center; }
 .google-fallback { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid #dadce0; border-radius: 4px; background: #fff; color: #3c4043; font: 500 14px Arial, sans-serif; cursor: pointer; }
 .google-fallback:hover { background: #f8faff; border-color: #d2e3fc; }
-.google-fallback:disabled { cursor: wait; opacity: .55; }
+.google-fallback:disabled { cursor: not-allowed; opacity: .55; }
 .google-mark { color: #4285f4; font-size: 18px; font-weight: 700; }
 .auth-switch { text-align: center; font-size: 12px; color: #788177; margin: 30px 0 0; }
 .auth-switch a { margin-left: 4px; font-weight: 600; }
@@ -104,3 +104,9 @@ body { font-size: 16px; }
 .enroll-button { width: 100%; margin-top: 18px; padding: 12px 15px; border: 0; border-radius: 9px; color: #173f31; background: #e9f0d9; font-weight: 700; }.enroll-button:disabled { color: #829087; background: #ffffff18; }
 .my-course-list { display: grid; gap: 14px; }.my-course-row { display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center; padding: 24px 27px; border: 1px solid #dfe4da; border-radius: 15px; background: white; }.my-course-row h2 { margin: 10px 0 6px; font-size: 21px; }.my-course-row p { margin: 0; color: #748078; }.enrollment-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }.enrollment-meta small { color: #8a948c; }.enrollment-meta a { margin-top: 5px; font-weight: 700; }
 @media (max-width: 700px) { .my-course-row { grid-template-columns: 1fr; }.enrollment-meta { align-items: flex-start; }.client-nav a { padding: 9px; font-size: 12px; } }
+.user-trigger img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.course-card-actions { display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px }.quick-enroll{padding:9px 11px;border-radius:8px;color:white;background:#204e3b;text-decoration:none;font-size:12px;font-weight:700}.quick-enroll.disabled{pointer-events:none;opacity:.55}.course-cover{background-position:center;background-size:cover}
+.toast-viewport{position:fixed;z-index:100;right:22px;bottom:22px;display:grid;gap:10px;width:min(370px,calc(100% - 32px))}.toast{display:grid;grid-template-columns:1fr auto;gap:5px 15px;padding:15px 16px;border-left:4px solid #367855;border-radius:11px;background:white;box-shadow:0 15px 50px #10251a35}.toast strong,.toast span{grid-column:1}.toast span{color:#607067;font-size:13px}.toast button{grid-column:2;grid-row:1/3;border:0;background:transparent;color:#67756c}.toast.error{border-color:#c94b45}.toast.info{border-color:#4a6fc7}
+.loading-state{min-height:220px;display:flex;justify-content:center;align-items:center;gap:12px;color:#69776e}.spinner{width:25px;height:25px;display:inline-block;border:3px solid #cdd8ce;border-top-color:#20523d;border-radius:50%;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.avatar-preview{width:90px;height:90px;object-fit:cover;border-radius:50%;margin:0 auto 18px;display:block}.image-upload{display:grid;gap:8px;margin-bottom:14px;font-size:13px}
+.upload-progress{display:flex;align-items:center;gap:9px;margin-top:10px;font-weight:700;color:#315747}.upload-progress .spinner,.button-spinner{width:18px;height:18px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}.avatar-preview-frame{width:132px;height:132px;border:2px dashed #cad5c8;border-radius:22px;display:grid;place-items:center;overflow:hidden;background:#f6f8f3;color:#7b897e;margin:12px auto}.avatar-preview-frame .avatar-preview{width:100%;height:100%;object-fit:cover;border-radius:0}.enroll-button{display:flex;justify-content:center;align-items:center;gap:9px}.enroll-button.cancel{background:#8d3b32}.loading-state{min-height:140px;display:grid;place-items:center}.loading-state .spinner{width:42px;height:42px;border-width:4px}
+.password-field{position:relative}.password-field input{padding-right:52px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:8px;background:transparent;color:#65756b;display:grid;place-items:center;cursor:pointer;font-size:18px}.password-toggle:hover{background:#edf2e9}.password-toggle.visible{background:#e3ecdf;color:#164d35}

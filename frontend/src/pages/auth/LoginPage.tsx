@@ -5,7 +5,7 @@ import Button from '../../components/common/Button';
 import { authService } from '../../services/auth.service';
 import { errorMessage } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
-import GoogleSignIn from './components/GoogleSignIn';
+import { showToast } from '../../components/common/Toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
@@ -13,8 +13,8 @@ export default function LoginPage() {
   const signIn = useAuth(state => state.signIn); const navigate = useNavigate(); const location = useLocation();
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
-    try { signIn(await authService.login(email, password)); navigate('/', { replace: true }); }
-    catch (reason) { setError(errorMessage(reason)); } finally { setBusy(false); }
+    try { signIn(await authService.login(email, password)); showToast('Đăng nhập thành công.'); navigate('/', { replace: true }); }
+    catch (reason) { const message = errorMessage(reason); setError(message); showToast(message, 'error'); } finally { setBusy(false); }
   }
   return <>
     <p className="eyebrow">TÀI KHOẢN CỦA BẠN</p><h2>Chào mừng trở lại</h2><p className="muted">Đăng nhập để tiếp tục cùng PKS.</p>
@@ -27,7 +27,6 @@ export default function LoginPage() {
         <Button type="submit" disabled={busy}>{busy ? 'Đang đăng nhập…' : 'Đăng nhập'}<span aria-hidden="true">↗</span></Button>
       </fieldset>
     </form>
-    <GoogleSignIn busy={busy} setBusy={setBusy} setError={setError} />
     <p className="auth-switch">Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link></p>
   </>;
 }

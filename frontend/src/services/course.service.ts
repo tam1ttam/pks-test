@@ -6,4 +6,5 @@ export const courseService = {
     return (await api.get<Page<Course>>('/courses', { params })).data;
   },
   async find(code: string) { return (await api.get<Course>(`/courses/${code}`)).data; },
+  async categories() { return (await api.get<{ items: Array<{ code: string; name: string }> }>('/categories')).data.items; },
 };

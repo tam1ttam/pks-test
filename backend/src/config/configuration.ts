@@ -8,6 +8,7 @@ export default () => ({
     secure: process.env.SMTP_SECURE === 'true', user: process.env.SMTP_USER || '',
     password: process.env.SMTP_PASSWORD || '', from: process.env.SMTP_FROM || '',
   },
+  cloudinary: { cloudName: process.env.CLOUDINARY_CLOUD_NAME || '', apiKey: process.env.CLOUDINARY_API_KEY || '', apiSecret: process.env.CLOUDINARY_API_SECRET || '' },
 });
 
 export function validateEnvironment(env: Record<string, unknown>) {
