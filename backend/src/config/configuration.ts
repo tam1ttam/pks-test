@@ -3,6 +3,11 @@ export default () => ({
   frontendUrls: (process.env.FRONTEND_URL || 'http://localhost:5173,http://localhost:5174')
     .split(',').map(origin => origin.trim()).filter(Boolean),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  mail: {
+    host: process.env.SMTP_HOST || '', port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true', user: process.env.SMTP_USER || '',
+    password: process.env.SMTP_PASSWORD || '', from: process.env.SMTP_FROM || '',
+  },
 });
 
 export function validateEnvironment(env: Record<string, unknown>) {

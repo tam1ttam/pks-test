@@ -14,14 +14,6 @@
       "value": "PksDemo@123"
     },
     {
-      "key": "adminToken",
-      "value": ""
-    },
-    {
-      "key": "studentToken",
-      "value": ""
-    },
-    {
       "key": "newEmail",
       "value": ""
     },
@@ -30,11 +22,11 @@
       "value": ""
     },
     {
-      "key": "courseId",
+      "key": "courseCode",
       "value": ""
     },
     {
-      "key": "enrollmentId",
+      "key": "enrollmentCode",
       "value": ""
     }
   ],
@@ -50,15 +42,17 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "noauth"
-            },
             "url": "{{baseUrl}}/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@pks.demo\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "raw": "{\n  \"email\": \"admin@pks.demo\",\n  \"password\": \"{{demoPassword}}\",\n  \"portal\": \"ADMIN\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -72,8 +66,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-                  "if (pm.response.code === 200) pm.collectionVariables.set('adminToken', pm.response.json().accessToken);"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }
@@ -92,18 +85,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/admin/users",
             "body": {
               "mode": "raw",
@@ -131,7 +119,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code === 201) pm.collectionVariables.set('userId', pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set('userId', pm.response.json().code);"
                 ]
               }
             }
@@ -141,17 +129,13 @@
           "name": "List Students",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/admin/users?role=STUDENT&page=1&limit=20"
           },
           "event": [
@@ -170,17 +154,13 @@
           "name": "Get Student",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/admin/users/{{userId}}"
           },
           "event": [
@@ -203,18 +183,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/admin/users/{{userId}}",
             "body": {
               "mode": "raw",
@@ -246,18 +221,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/admin/users",
             "body": {
               "mode": "raw",
@@ -291,9 +261,6 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "noauth"
-            },
             "url": "{{baseUrl}}/auth/login",
             "body": {
               "mode": "raw",
@@ -311,8 +278,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-                  "if (pm.response.code === 200) pm.collectionVariables.set('studentToken', pm.response.json().accessToken);"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
                 ]
               }
             }
@@ -331,18 +297,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/admin/courses",
             "body": {
               "mode": "raw",
@@ -361,7 +322,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code === 201) pm.collectionVariables.set('courseId', pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set('courseCode', pm.response.json().code);"
                 ]
               }
             }
@@ -372,9 +333,6 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "noauth"
-            },
             "url": "{{baseUrl}}/courses?search=Postman&category=Web&page=1&limit=20"
           },
           "event": [
@@ -394,10 +352,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": "{{baseUrl}}/courses/{{courseId}}"
+            "url": "{{baseUrl}}/courses/{{courseCode}}"
           },
           "event": [
             {
@@ -419,19 +374,14 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}",
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"isPublished\": false\n}",
@@ -459,10 +409,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "noauth"
-            },
-            "url": "{{baseUrl}}/courses/{{courseId}}"
+            "url": "{{baseUrl}}/courses/{{courseCode}}"
           },
           "event": [
             {
@@ -480,17 +427,13 @@
           "name": "Admin sees hidden courses",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/admin/courses?isPublished=false"
           },
           "event": [
@@ -513,19 +456,14 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}",
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"isPublished\": true\n}",
@@ -556,19 +494,14 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}",
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tuition\": -1\n}",
@@ -601,17 +534,7 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}",
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Forbidden\"\n}",
@@ -649,20 +572,10 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/enrollments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseId\": \"{{courseId}}\"\n}",
+              "raw": "{\n  \"courseCode\": \"{{courseCode}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -677,7 +590,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code === 201) pm.collectionVariables.set('enrollmentId', pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set('enrollmentCode', pm.response.json().code);"
                 ]
               }
             }
@@ -693,20 +606,10 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/enrollments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseId\": \"{{courseId}}\"\n}",
+              "raw": "{\n  \"courseCode\": \"{{courseCode}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -734,22 +637,17 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/enrollments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"studentId\": \"10000000-0000-4000-8000-000000000004\"\n}",
+              "raw": "{\n  \"courseCode\": \"{{courseCode}}\",\n  \"studentCode\": \"10000000-0000-4000-8000-000000000004\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -774,16 +672,6 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/enrollments/me"
           },
           "event": [
@@ -803,17 +691,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}"
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}"
           },
           "event": [
             {
@@ -831,18 +709,14 @@
           "name": "Course roster",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}/enrollments"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}/enrollments"
           },
           "event": [
             {
@@ -860,18 +734,14 @@
           "name": "Admin enrollment filters",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments?courseId={{courseId}}&status=ENROLLED"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/enrollments?courseCode={{courseCode}}&status=ENROLLED"
           },
           "event": [
             {
@@ -895,17 +765,7 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}",
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"CANCELLED\"\n}",
@@ -938,17 +798,7 @@
                 "value": "application/json"
               }
             ],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}",
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"ENROLLED\"\n}",
@@ -975,18 +825,14 @@
           "name": "Course with history cannot be deleted",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}"
           },
           "event": [
             {
@@ -1004,17 +850,13 @@
           "name": "User with history cannot be deleted",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/admin/users/{{userId}}"
           },
           "event": [
@@ -1034,17 +876,7 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}"
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}"
           },
           "event": [
             {
@@ -1067,18 +899,14 @@
           "name": "Delete enrollment",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}"
           },
           "event": [
             {
@@ -1096,18 +924,14 @@
           "name": "Deleted enrollment returns 404",
           "request": {
             "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/enrollments/{{enrollmentId}}"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/enrollments/{{enrollmentCode}}"
           },
           "event": [
             {
@@ -1125,18 +949,14 @@
           "name": "Delete course",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/courses/{{courseId}}"
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/courses/{{courseCode}}"
           },
           "event": [
             {
@@ -1154,17 +974,13 @@
           "name": "Delete created user",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/admin/users/{{userId}}"
           },
           "event": [
@@ -1184,16 +1000,6 @@
           "request": {
             "method": "GET",
             "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{studentToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "url": "{{baseUrl}}/auth/me"
           },
           "event": [
@@ -1212,17 +1018,13 @@
           "name": "Logout Admin",
           "request": {
             "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "header": [
+              {
+                "key": "X-PKS-Portal",
+                "value": "admin",
+                "type": "text"
+              }
+            ],
             "url": "{{baseUrl}}/auth/logout"
           },
           "event": [

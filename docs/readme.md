@@ -1,6 +1,6 @@
-# Tài liệu kiểm thử và bài nộp
+﻿# Tài liệu kiểm thử và bài nộp
 
-Đã có Auth/Profile và CRUD User/Course/Enrollment với PostgreSQL thật. Collection tài khoản nằm ở `pks-auth.postman_collection.json`; collection CRUD tại `pks-crud.postman_collection.json`. ERD ở `erd.mmd` (Mermaid). Chưa có ảnh kiểm thử Postman; cần chạy Postman thật và chụp request/response khi hoàn thiện bài nộp.
+Đã có Auth/Profile và CRUD User/Course/Enrollment với PostgreSQL thật. Collection tài khoản nằm ở `pks-auth.postman_collection.json`; collection CRUD tại `pks-crud.postman_collection.json`. ERD ở `erd.mmd` (Mermaid). Thư mục `screenshots/` có bằng chứng request/response lấy trực tiếp từ API local, đã che mật khẩu và cookie. Khi nộp bài có thể bổ sung ảnh giao diện Postman sau khi chạy chính hai collection này.
 
 Với CRUD Collection: chạy `npm run db:migrate`, `npm run db:seed` trong backend, bật backend rồi chạy collection theo thứ tự. Collection dùng tài khoản demo local, tự giữ token/ID; tạo User/Course/Enrollment test và xóa ở nhóm cuối. Nếu dừng giữa chừng, có thể còn dữ liệu Postman test; không chạy đồng thời hai lượt cùng collection variables. Google chỉ nằm trong Auth Collection và cần token Google thật. Xóa token khỏi variables trước khi export/chia sẻ.
 

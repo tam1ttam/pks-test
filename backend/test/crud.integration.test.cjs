@@ -1,4 +1,4 @@
-const { before, after, test } = require('node:test');
+﻿const { before, after, test } = require('node:test');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const { NestFactory } = require('@nestjs/core');
@@ -14,24 +14,28 @@ let app, server, db;
 const marker = randomUUID();
 const password = 'Crud-test-password-123!';
 const users = {};
-const tokens = {};
+const cookies = {};
 const userIds = [];
-const courseIds = [];
+const courseCodes = [];
 const courseBody = (name, overrides = {}) => ({ name: `${marker} ${name}`, category: 'Web', instructor: 'Integration Teacher', shortDescription: 'Test summary', description: 'Integration test course', tuition: 2500000, capacity: 3, ...overrides });
 const call = (method, path, actor = 'admin') => {
   const req = request(server)[method](`/api${path}`);
-  return actor ? req.auth(tokens[actor], { type: 'bearer' }) : req;
+  if (!actor) return req;
+  req.set('Cookie', cookies[actor]);
+  if (actor === 'admin') req.set('X-PKS-Portal', 'admin');
+  return req;
 };
 async function createCourse(name, overrides = {}) {
   const response = await call('post', '/admin/courses').send(courseBody(name, overrides)).expect(201);
-  courseIds.push(response.body.id);
+  const [stored] = await db.query('SELECT id FROM courses WHERE code = $1', [response.body.code]);
+  courseCodes.push(stored.id);
   return response.body;
 }
 async function countMatches() {
   const rows = await db.query(`SELECT c.id, c.capacity, c.enrolled_count,
     count(e.id) FILTER (WHERE e.status = 'ENROLLED')::integer AS actual
     FROM courses c LEFT JOIN enrollments e ON e.course_id = c.id
-    WHERE c.id = ANY($1::uuid[]) GROUP BY c.id`, [courseIds]);
+    WHERE c.id = ANY($1::uuid[]) GROUP BY c.id`, [courseCodes]);
   for (const row of rows) {
     assert.equal(row.enrolled_count, row.actual);
     assert.ok(row.actual >= 0 && row.actual <= row.capacity);
@@ -45,11 +49,11 @@ before(async () => {
   server = app.getHttpServer(); db = app.get(DataSource);
   const hash = await bcrypt.hash(password, 10);
   for (const [key, role] of [['admin', 'ADMIN'], ['s1', 'STUDENT'], ['s2', 'STUDENT'], ['s3', 'STUDENT']]) {
-    const id = randomUUID(); const email = `crud-${key}-${marker}@example.com`;
-    await db.query('INSERT INTO users(id, full_name, email, password_hash, role) VALUES($1,$2,$3,$4,$5)', [id, `CRUD ${key}`, email, hash, role]);
-    userIds.push(id); users[key] = { id, email };
-    const login = await request(server).post('/api/auth/login').send({ email, password }).expect(200);
-    tokens[key] = login.body.accessToken;
+    const id = randomUUID(); const code = `USR-${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`; const email = `crud-${key}-${marker}@example.com`;
+    await db.query('INSERT INTO users(id, code, full_name, email, password_hash, role) VALUES($1,$2,$3,$4,$5,$6)', [id, code, `CRUD ${key}`, email, hash, role]);
+    userIds.push(id); users[key] = { id, code, email };
+    const login = await request(server).post('/api/auth/login').send({ email, password, portal: role === 'ADMIN' ? 'ADMIN' : 'CLIENT' }).expect(200);
+    cookies[key] = login.headers['set-cookie'][0].split(';')[0];
   }
 });
 
@@ -57,8 +61,8 @@ after(async () => {
   try {
     if (db?.isInitialized) {
       await db.transaction(async manager => {
-        await manager.query('DELETE FROM enrollments WHERE student_id = ANY($1::uuid[]) OR course_id = ANY($2::uuid[])', [userIds, courseIds]);
-        await manager.query('DELETE FROM courses WHERE id = ANY($1::uuid[])', [courseIds]);
+        await manager.query('DELETE FROM enrollments WHERE student_id = ANY($1::uuid[]) OR course_id = ANY($2::uuid[])', [userIds, courseCodes]);
+        await manager.query('DELETE FROM courses WHERE id = ANY($1::uuid[])', [courseCodes]);
         await manager.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [userIds]);
       });
     }
@@ -71,7 +75,7 @@ test('User CRUD: admin only, safe responses, unique email, validation and sessio
   await call('post', '/admin/users', 's1').send({}).expect(403);
   const email = `crud-created-${marker}@example.com`;
   const created = await call('post', '/admin/users').send({ fullName: 'Created Student', email: email.toUpperCase(), password }).expect(201);
-  userIds.push(created.body.id);
+  userIds.push((await db.query('SELECT id FROM users WHERE code = $1', [created.body.code]))[0].id);
   assert.equal(created.body.email, email);
   assert.equal(created.body.role, 'STUDENT');
   assert.equal(created.body.passwordHash, undefined);
@@ -82,25 +86,26 @@ test('User CRUD: admin only, safe responses, unique email, validation and sessio
   assert.equal(list.body.items.length, 2);
   assert.equal(list.body.total, 4);
   assert.ok(!JSON.stringify(list.body).includes('passwordHash'));
-  await call('get', '/admin/users/not-uuid').expect(400);
+  await call('get', '/admin/users/not-a-code').expect(404);
   await call('get', `/admin/users/${randomUUID()}`).expect(404);
-  await call('patch', `/admin/users/${created.body.id}`).send({ fullName: null }).expect(400);
+  await call('patch', `/admin/users/${created.body.code}`).send({ fullName: null }).expect(400);
   const login = await request(server).post('/api/auth/login').send({ email, password }).expect(200);
-  const locked = await call('patch', `/admin/users/${created.body.id}`).send({ isActive: false }).expect(200);
+  const locked = await call('patch', `/admin/users/${created.body.code}`).send({ isActive: false }).expect(200);
   assert.equal(locked.body.isActive, false);
-  await request(server).get('/api/auth/me').auth(login.body.accessToken, { type: 'bearer' }).expect(401);
+  await request(server).get('/api/auth/me').set('Cookie', login.headers['set-cookie'][0].split(';')[0]).expect(401);
   await request(server).post('/api/auth/login').send({ email, password }).expect(401);
-  const activeAgain = await call('patch', `/admin/users/${created.body.id}`).send({ isActive: true }).expect(200);
+  const activeAgain = await call('patch', `/admin/users/${created.body.code}`).send({ isActive: true }).expect(200);
   assert.equal(activeAgain.body.isActive, true);
   const loginAfterUnlock = await request(server).post('/api/auth/login').send({ email, password }).expect(200);
-  const updated = await call('patch', `/admin/users/${created.body.id}`).send({ fullName: 'Updated Student', role: 'ADMIN', password: 'Updated-password-123!' }).expect(200);
+  await call('patch', `/admin/users/${created.body.code}`).send({ password: 'Updated-password-123!' }).expect(400);
+  const updated = await call('patch', `/admin/users/${created.body.code}`).send({ fullName: 'Updated Student', role: 'ADMIN' }).expect(200);
   assert.equal(updated.body.role, 'ADMIN');
-  await request(server).get('/api/auth/me').auth(loginAfterUnlock.body.accessToken, { type: 'bearer' }).expect(401);
-  await call('patch', `/admin/users/${users.admin.id}`).send({ role: 'STUDENT' }).expect(409);
-  await call('patch', `/admin/users/${users.admin.id}`).send({ isActive: false }).expect(409);
-  await call('delete', `/admin/users/${users.admin.id}`).expect(409);
-  await call('delete', `/admin/users/${created.body.id}`).expect(204);
-  await call('get', `/admin/users/${created.body.id}`).expect(404);
+  await request(server).get('/api/auth/me').set('Cookie', loginAfterUnlock.headers['set-cookie'][0].split(';')[0]).expect(401);
+  await call('patch', `/admin/users/${users.admin.code}`).send({ role: 'STUDENT' }).expect(409);
+  await call('patch', `/admin/users/${users.admin.code}`).send({ isActive: false }).expect(409);
+  await call('delete', `/admin/users/${users.admin.code}`).expect(409);
+  await call('delete', `/admin/users/${created.body.code}`).expect(204);
+  await call('get', `/admin/users/${created.body.code}`).expect(404);
   console.log('[PASS] admin User CRUD, validation, protected roles and revoked sessions');
 });
 
@@ -116,67 +121,67 @@ test('Course CRUD: public filtering, admin writes, hide, delete and DTO validati
   assert.equal(created.availability, 'AVAILABLE');
   const list = await call('get', `/courses?search=${marker}&category=web&limit=1`, null).expect(200);
   assert.equal(list.body.total, 1);
-  assert.equal(list.body.items[0].id, created.id);
+  assert.equal(list.body.items[0].code, created.code);
   await call('get', '/courses?page=-1', null).expect(400);
   await call('get', '/courses?isPublished=garbage', null).expect(400);
-  await call('get', `/courses/${created.id}`, null).expect(200);
-  await call('patch', `/admin/courses/${created.id}`).send({ isPublished: false }).expect(200);
-  await call('get', `/courses/${created.id}`, null).expect(404);
+  await call('get', `/courses/${created.code}`, null).expect(200);
+  await call('patch', `/admin/courses/${created.code}`).send({ isPublished: false }).expect(200);
+  await call('get', `/courses/${created.code}`, null).expect(404);
   const hidden = await call('get', `/courses?search=${marker}&isPublished=false`, null).expect(200);
   assert.equal(hidden.body.total, 0);
   const adminList = await call('get', `/admin/courses?search=${marker}&isPublished=false`).expect(200);
-  assert.equal(adminList.body.items[0].id, created.id);
-  await call('patch', `/admin/courses/${created.id}`).send({ capacity: null }).expect(400);
-  await call('delete', `/admin/courses/${created.id}`).expect(204);
-  await call('delete', `/admin/courses/${created.id}`).expect(404);
+  assert.equal(adminList.body.items[0].code, created.code);
+  await call('patch', `/admin/courses/${created.code}`).send({ capacity: null }).expect(400);
+  await call('delete', `/admin/courses/${created.code}`).expect(204);
+  await call('delete', `/admin/courses/${created.code}`).expect(404);
   console.log('[PASS] Course CRUD, publication, pagination/search/category, input validation');
 });
 
 test('Enrollment CRUD: ownership, counts, cancellation, restoration, protected history', async () => {
   const course = await createCourse('Enrollment Course', { capacity: 1 });
-  await call('post', '/enrollments', 's1').send({ courseId: course.id, studentId: users.s2.id }).expect(403);
-  const created = await call('post', '/enrollments', 's1').send({ courseId: course.id }).expect(201);
-  const id = created.body.id;
-  assert.equal(created.body.studentId, users.s1.id);
+  await call('post', '/enrollments', 's1').send({ courseCode: course.code, studentCode: users.s2.code }).expect(403);
+  const created = await call('post', '/enrollments', 's1').send({ courseCode: course.code }).expect(201);
+  const id = created.body.code;
+  assert.equal(created.body.studentCode, users.s1.code);
   assert.equal(created.body.course.enrolledCount, 1);
   assert.match(created.body.enrolledDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.equal(vietnamDate(new Date('2026-10-07T18:30:00Z')), '2026-10-08');
-  await call('post', '/enrollments', 's1').send({ courseId: course.id }).expect(409);
-  await call('post', '/enrollments', 's2').send({ courseId: course.id }).expect(409);
+  await call('post', '/enrollments', 's1').send({ courseCode: course.code }).expect(409);
+  await call('post', '/enrollments', 's2').send({ courseCode: course.code }).expect(409);
   await call('get', `/enrollments/${id}`, 's2').expect(404);
   await call('patch', `/enrollments/${id}`, 's2').send({ status: 'CANCELLED' }).expect(404);
   await call('get', '/enrollments', 's1').expect(403);
   await call('delete', `/enrollments/${id}`, 's1').expect(403);
-  const mine = await call('get', `/enrollments/me?studentId=${users.s2.id}`, 's1').expect(200);
-  assert.ok(mine.body.items.every(item => item.studentId === users.s1.id));
-  const roster = await call('get', `/admin/courses/${course.id}/enrollments`).expect(200);
+  const mine = await call('get', `/enrollments/me?studentCode=${users.s2.code}`, 's1').expect(200);
+  assert.ok(mine.body.items.every(item => item.studentCode === users.s1.code));
+  const roster = await call('get', `/admin/courses/${course.code}/enrollments`).expect(200);
   assert.equal(roster.body.items[0].student.email, users.s1.email);
   assert.equal(roster.body.items[0].course.name, course.name);
   await call('get', `/admin/courses/${randomUUID()}/enrollments`).expect(404);
-  await call('delete', `/admin/courses/${course.id}`).expect(409);
-  await call('delete', `/admin/users/${users.s1.id}`).expect(409);
-  await call('patch', `/admin/users/${users.s1.id}`).send({ role: 'ADMIN' }).expect(409);
-  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED', courseId: randomUUID() }).expect(400);
+  await call('delete', `/admin/courses/${course.code}`).expect(409);
+  await call('delete', `/admin/users/${users.s1.code}`).expect(409);
+  await call('patch', `/admin/users/${users.s1.code}`).send({ role: 'ADMIN' }).expect(409);
+  await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED', courseCode: randomUUID() }).expect(400);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'INVALID' }).expect(400);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED' }).expect(200);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'CANCELLED' }).expect(200);
-  assert.equal((await call('get', `/courses/${course.id}`, null)).body.enrolledCount, 0);
-  await call('patch', `/admin/courses/${course.id}`).send({ isPublished: false }).expect(200);
+  assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
+  await call('patch', `/admin/courses/${course.code}`).send({ isPublished: false }).expect(200);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(409);
   await call('get', `/enrollments/${id}`, 's1').expect(200);
-  await call('patch', `/admin/courses/${course.id}`).send({ isPublished: true }).expect(200);
+  await call('patch', `/admin/courses/${course.code}`).send({ isPublished: true }).expect(200);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(200);
   await call('patch', `/enrollments/${id}`, 's1').send({ status: 'ENROLLED' }).expect(200);
   await call('delete', `/enrollments/${id}`).expect(204);
   await call('get', `/enrollments/${id}`).expect(404);
-  assert.equal((await call('get', `/courses/${course.id}`, null)).body.enrolledCount, 0);
-  await call('delete', `/admin/courses/${course.id}`).expect(204);
+  assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
+  await call('delete', `/admin/courses/${course.code}`).expect(204);
   console.log('[PASS] Enrollment lifecycle and ownership, history restrictions, VN date');
 });
 
 test('Enrollment race: only one student can take the last seat', async () => {
   const course = await createCourse('Last Seat', { capacity: 1 });
-  const results = await Promise.all(['s1', 's2', 's3'].map(actor => call('post', '/enrollments', actor).send({ courseId: course.id })));
+  const results = await Promise.all(['s1', 's2', 's3'].map(actor => call('post', '/enrollments', actor).send({ courseCode: course.code })));
   assert.deepEqual(results.map(result => result.status).sort(), [201, 409, 409]);
   await countMatches();
   console.log('[PASS] 3 simultaneous students -> exactly one successful last-seat enrollment');
@@ -184,11 +189,11 @@ test('Enrollment race: only one student can take the last seat', async () => {
 
 test('Duplicate requests and simultaneous capacity change preserve constraints', async () => {
   const course = await createCourse('Duplicate Race', { capacity: 2 });
-  const results = await Promise.all([1, 2].map(() => call('post', '/enrollments', 's1').send({ courseId: course.id })));
+  const results = await Promise.all([1, 2].map(() => call('post', '/enrollments', 's1').send({ courseCode: course.code })));
   assert.deepEqual(results.map(result => result.status).sort(), [201, 409]);
   const races = await Promise.all([
-    call('post', '/enrollments', 's2').send({ courseId: course.id }),
-    call('patch', `/admin/courses/${course.id}`).send({ capacity: 1 }),
+    call('post', '/enrollments', 's2').send({ courseCode: course.code }),
+    call('patch', `/admin/courses/${course.code}`).send({ capacity: 1 }),
   ]);
   assert.ok(races.every(result => [200, 201, 409].includes(result.status)));
   assert.equal(races.filter(result => result.status === 409).length, 1);
@@ -198,14 +203,14 @@ test('Duplicate requests and simultaneous capacity change preserve constraints',
 
 test('Hidden/missing courses and non-student enrollment are rejected', async () => {
   const hidden = await createCourse('Hidden Enrollment', { isPublished: false });
-  await call('post', '/enrollments', 's1').send({ courseId: hidden.id }).expect(409);
-  await call('post', '/enrollments', 's1').send({ courseId: randomUUID() }).expect(404);
-  await call('post', '/enrollments').send({ courseId: hidden.id }).expect(400);
-  await call('post', '/enrollments').send({ courseId: hidden.id, studentId: users.admin.id }).expect(400);
-  await call('post', '/enrollments').send({ courseId: hidden.id, studentId: randomUUID() }).expect(404);
+  await call('post', '/enrollments', 's1').send({ courseCode: hidden.code }).expect(409);
+  await call('post', '/enrollments', 's1').send({ courseCode: 'CRS-FFFFFFFFFFFF' }).expect(404);
+  await call('post', '/enrollments').send({ courseCode: hidden.code }).expect(400);
+  await call('post', '/enrollments').send({ courseCode: hidden.code, studentCode: users.admin.code }).expect(400);
+  await call('post', '/enrollments').send({ courseCode: hidden.code, studentCode: 'USR-FFFFFFFFFFFF' }).expect(404);
   const visible = await createCourse('Admin Enrollment');
-  await call('post', '/enrollments').send({ courseId: visible.id, studentId: users.s3.id }).expect(201);
-  const roster = await call('get', `/enrollments?courseId=${visible.id}&studentId=${users.s3.id}&status=ENROLLED`).expect(200);
+  await call('post', '/enrollments').send({ courseCode: visible.code, studentCode: users.s3.code }).expect(201);
+  const roster = await call('get', `/enrollments?courseCode=${visible.code}&studentCode=${users.s3.code}&status=ENROLLED`).expect(200);
   assert.equal(roster.body.total, 1);
   await countMatches();
   console.log('[PASS] hidden/missing course, student-only targets, admin enrollment and filters');
@@ -224,24 +229,24 @@ test('Injected failure after enrollment insert rolls back both enrollment and co
       return callback(manager);
     });
   };
-  try { await call('post', '/enrollments', 's1').send({ courseId: course.id }).expect(500); }
+  try { await call('post', '/enrollments', 's1').send({ courseCode: course.code }).expect(500); }
   finally { db.transaction = transaction; }
-  const [{ total }] = await db.query('SELECT count(*)::integer AS total FROM enrollments WHERE course_id = $1', [course.id]);
+  const [{ total }] = await db.query('SELECT count(*)::integer AS total FROM enrollments e JOIN courses c ON c.id = e.course_id WHERE c.code = $1', [course.code]);
   assert.equal(total, 0);
-  assert.equal((await call('get', `/courses/${course.id}`, null)).body.enrolledCount, 0);
+  assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
   await countMatches();
   console.log('[PASS] transaction rollback verified after real enrollment insert');
 });
 
 test('Concurrent cancellation/deletion does not decrement count twice', async () => {
   const course = await createCourse('Cancel Race');
-  const created = await call('post', '/enrollments', 's3').send({ courseId: course.id }).expect(201);
+  const created = await call('post', '/enrollments', 's3').send({ courseCode: course.code }).expect(201);
   const results = await Promise.all([
-    call('patch', `/enrollments/${created.body.id}`, 's3').send({ status: 'CANCELLED' }),
-    call('delete', `/enrollments/${created.body.id}`),
+    call('patch', `/enrollments/${created.body.code}`, 's3').send({ status: 'CANCELLED' }),
+    call('delete', `/enrollments/${created.body.code}`),
   ]);
   assert.ok(results.every(response => [200, 204, 404].includes(response.status)));
   await countMatches();
-  assert.equal((await call('get', `/courses/${course.id}`, null)).body.enrolledCount, 0);
+  assert.equal((await call('get', `/courses/${course.code}`, null)).body.enrolledCount, 0);
   console.log('[PASS] concurrent cancel/delete leaves enrolledCount=0');
 });

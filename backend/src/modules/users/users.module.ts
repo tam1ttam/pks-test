@@ -6,6 +6,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { AdminUsersController } from './admin-users.controller';
 import { AdminUsersService } from './admin-users.service';
+import { MailModule } from '../mail/mail.module';
 
-@Module({ imports: [TypeOrmModule.forFeature([User])], controllers: [UsersController, AdminUsersController], providers: [UsersRepository, UsersService, AdminUsersService], exports: [UsersRepository, UsersService] })
+@Module({ imports: [TypeOrmModule.forFeature([User]), MailModule], controllers: [UsersController, AdminUsersController], providers: [UsersRepository, UsersService, AdminUsersService], exports: [UsersRepository, UsersService] })
 export class UsersModule {}

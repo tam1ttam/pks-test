@@ -4,6 +4,7 @@ erDiagram
     COURSES ||--o{ ENROLLMENTS : contains
     USERS {
         uuid id PK
+        varchar code UK
         varchar full_name
         varchar email UK
         varchar password_hash "nullable, bcrypt"
@@ -20,6 +21,7 @@ erDiagram
     }
     COURSES {
         uuid id PK
+        varchar code UK
         varchar name
         varchar category
         varchar instructor
@@ -34,6 +36,7 @@ erDiagram
     }
     ENROLLMENTS {
         uuid id PK
+        varchar code UK
         uuid student_id FK "ON DELETE RESTRICT"
         uuid course_id FK "ON DELETE RESTRICT; UNIQUE(student_id,course_id)"
         varchar status "ENROLLED | CANCELLED"

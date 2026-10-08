@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
@@ -11,7 +11,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 export class CoursesController {
   constructor(private readonly courses: CoursesService) {}
   @Get() list(@Query() query: CourseQueryDto) { return this.courses.list(query); }
-  @Get(':id') find(@Param('id', ParseUUIDPipe) id: string) { return this.courses.find(id); }
+  @Get(':code') find(@Param('code') code: string) { return this.courses.find(code); }
 }
 
 @Controller('admin/courses')
@@ -19,8 +19,8 @@ export class CoursesController {
 export class AdminCoursesController {
   constructor(private readonly courses: CoursesService) {}
   @Get() @RequirePermissions('courses:read') list(@Query() query: CourseQueryDto) { return this.courses.list(query, true); }
-  @Get(':id') @RequirePermissions('courses:read') find(@Param('id', ParseUUIDPipe) id: string) { return this.courses.find(id, true); }
+  @Get(':code') @RequirePermissions('courses:read') find(@Param('code') code: string) { return this.courses.find(code, true); }
   @Post() @RequirePermissions('courses:write') create(@Body() dto: CreateCourseDto) { return this.courses.create(dto); }
-  @Patch(':id') @RequirePermissions('courses:write') update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCourseDto) { return this.courses.update(id, dto); }
-  @Delete(':id') @RequirePermissions('courses:delete') @HttpCode(204) remove(@Param('id', ParseUUIDPipe) id: string) { return this.courses.remove(id); }
+  @Patch(':code') @RequirePermissions('courses:write') update(@Param('code') code: string, @Body() dto: UpdateCourseDto) { return this.courses.update(code, dto); }
+  @Delete(':code') @RequirePermissions('courses:delete') @HttpCode(204) remove(@Param('code') code: string) { return this.courses.remove(code); }
 }

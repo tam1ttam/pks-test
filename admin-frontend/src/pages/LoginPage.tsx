@@ -13,10 +13,7 @@ export default function LoginPage() {
     event.preventDefault(); setBusy(true); setError('');
     try {
       const response = await authService.login(email, password);
-      if (response.user.role !== 'ADMIN') {
-        await authService.rejectSession(response.accessToken).catch(() => undefined);
-        throw new Error('Cổng này chỉ dành cho Admin.');
-      }
+      if (response.user.role !== 'ADMIN') throw new Error('Cổng này chỉ dành cho Admin.');
       signIn(response); navigate('/', { replace: true });
     } catch (reason) { setError(errorMessage(reason)); }
     finally { setBusy(false); }

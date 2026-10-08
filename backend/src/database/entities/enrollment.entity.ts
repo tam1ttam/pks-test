@@ -8,6 +8,7 @@ export type EnrollmentStatus = 'ENROLLED' | 'CANCELLED';
 @Unique('uq_enrollment_student_course', ['studentId', 'courseId'])
 export class Enrollment {
   @PrimaryGeneratedColumn('uuid') id!: string;
+  @Column({ unique: true, length: 16 }) code!: string;
   @Column({ name: 'student_id', type: 'uuid' }) studentId!: string;
   @Column({ name: 'course_id', type: 'uuid' }) courseId!: string;
   @Column({ type: 'varchar', length: 16, default: 'ENROLLED' }) status!: EnrollmentStatus;

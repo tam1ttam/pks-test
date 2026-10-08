@@ -9,6 +9,7 @@ import { CreateCoursesEnrollments1791460800000 } from '../database/migrations/17
 import { RemoveStaffRole1791547200000 } from '../database/migrations/1791547200000-remove-staff-role';
 import { RemoveLegacyStaffDemo1791633600000 } from '../database/migrations/1791633600000-remove-legacy-staff-demo';
 import { AddUserActiveState1791720000000 } from '../database/migrations/1791720000000-add-user-active-state';
+import { AddPublicCodes1791806400000 } from '../database/migrations/1791806400000-add-public-codes';
 
 export function databaseOptions(): DataSourceOptions {
   return {
@@ -19,7 +20,7 @@ export function databaseOptions(): DataSourceOptions {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE || 'pkstest',
     entities: [User, AuthSession, Course, Enrollment],
-    migrations: [CreateAccounts1791374400000, CreateCoursesEnrollments1791460800000, RemoveStaffRole1791547200000, RemoveLegacyStaffDemo1791633600000, AddUserActiveState1791720000000],
+    migrations: [CreateAccounts1791374400000, CreateCoursesEnrollments1791460800000, RemoveStaffRole1791547200000, RemoveLegacyStaffDemo1791633600000, AddUserActiveState1791720000000, AddPublicCodes1791806400000],
     synchronize: false,
     migrationsRun: false,
     logging: false,
