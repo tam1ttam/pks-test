@@ -8,15 +8,17 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test:integration": "npm run build && node --test --test-reporter=spec test/app.integration.test.cjs",
+    "test:integration": "npm run build && node --test --test-concurrency=1 --test-reporter=spec test/app.integration.test.cjs test/crud.integration.test.cjs",
     "db:migrate": "npm run build && typeorm migration:run -d dist/database/data-source.js",
-    "db:check": "node scripts/check-db.cjs"
+    "db:check": "node scripts/check-db.cjs",
+    "db:seed": "node scripts/seed-db.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.0",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mapped-types": "^12.0.0",
     "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.7.1",

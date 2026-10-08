@@ -19,6 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!session || session.expiresAt <= new Date()) throw new UnauthorizedException('Phiên đăng nhập đã kết thúc.');
     const user = await this.users.findById(payload.sub);
     if (!user) throw new UnauthorizedException();
+    if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị khóa.');
     return { user, sessionId: session.id };
   }
 }

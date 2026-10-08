@@ -1,0 +1,42 @@
+erDiagram
+    USERS ||--o{ AUTH_SESSIONS : authenticates
+    USERS ||--o{ ENROLLMENTS : registers
+    COURSES ||--o{ ENROLLMENTS : contains
+    USERS {
+        uuid id PK
+        varchar full_name
+        varchar email UK
+        varchar password_hash "nullable, bcrypt"
+        varchar google_id UK "nullable"
+        varchar role "STUDENT | ADMIN"
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    AUTH_SESSIONS {
+        uuid id PK
+        uuid user_id FK "ON DELETE CASCADE"
+        timestamptz expires_at
+    }
+    COURSES {
+        uuid id PK
+        varchar name
+        varchar category
+        varchar instructor
+        varchar short_description
+        text description
+        numeric tuition "VND, integer >= 0"
+        integer capacity "1..100000"
+        integer enrolled_count "0..capacity, active only"
+        boolean is_published
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    ENROLLMENTS {
+        uuid id PK
+        uuid student_id FK "ON DELETE RESTRICT"
+        uuid course_id FK "ON DELETE RESTRICT; UNIQUE(student_id,course_id)"
+        varchar status "ENROLLED | CANCELLED"
+        timestamptz enrolled_at
+        timestamptz updated_at
+    }

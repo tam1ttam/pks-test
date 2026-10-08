@@ -38,6 +38,7 @@ export class AuthService {
     const user = await this.users.findByEmail(dto.email);
     const valid = await bcrypt.compare(dto.password, user?.passwordHash || this.dummyHash);
     if (!user?.passwordHash || !valid || Buffer.byteLength(dto.password, 'utf8') > 72) throw new UnauthorizedException('Email hoặc mật khẩu không đúng.');
+    if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.');
     return this.issueSession(user);
   }
 
@@ -58,6 +59,7 @@ export class AuthService {
         user = await this.users.create({ id: randomUUID(), fullName: (payload.name || email.split('@')[0]).slice(0, 100), email, googleId: payload.sub, role: 'STUDENT' });
       } catch (error) { this.handleUnique(error); }
     }
+    if (!user!.isActive) throw new UnauthorizedException('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.');
     return this.issueSession(user!);
   }
 

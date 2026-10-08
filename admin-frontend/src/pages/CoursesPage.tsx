@@ -1,0 +1,28 @@
+import { useEffect, useState, type FormEvent } from 'react';
+import Modal from '../components/Modal';
+import PermissionGate from '../components/PermissionGate';
+import { adminService, type CourseInput } from '../services/admin.service';
+import { errorMessage } from '../services/api';
+import type { Course } from '../types';
+
+const blank: CourseInput = { name: '', category: '', instructor: '', shortDescription: '', description: '', tuition: 0, capacity: 1, isPublished: true };
+
+export default function CoursesPage() {
+  const [items, setItems] = useState<Course[]>([]); const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState(''); const [published, setPublished] = useState('');
+  const [editing, setEditing] = useState<Course | 'new' | null>(null); const [form, setForm] = useState<CourseInput>(blank);
+  const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  async function load() { try { setError(''); const page = await adminService.courses({ limit: 100, ...(search && { search }), ...(published && { isPublished: published === 'true' }) }); setItems(page.items); setTotal(page.total); } catch (reason) { setError(errorMessage(reason)); } }
+  useEffect(() => { void load(); }, []);
+  function open(course?: Course) { setEditing(course || 'new'); setForm(course ? { name: course.name, category: course.category, instructor: course.instructor, shortDescription: course.shortDescription, description: course.description, tuition: course.tuition, capacity: course.capacity, isPublished: course.isPublished } : blank); setError(''); }
+  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); try { if (editing === 'new') await adminService.createCourse(form); else if (editing) await adminService.updateCourse(editing.id, form); setEditing(null); await load(); } catch (reason) { setError(errorMessage(reason)); } finally { setBusy(false); } }
+  async function remove(course: Course) { if (!confirm(`Xóa khóa học “${course.name}”?`)) return; try { await adminService.deleteCourse(course.id); await load(); } catch (reason) { setError(errorMessage(reason)); } }
+  return <>
+    <div className="page-heading"><div><p className="eyebrow">ĐÀO TẠO</p><h1>Quản lý khóa học</h1><p>{total} khóa học</p></div><PermissionGate permission="courses:write"><button className="primary-button" onClick={() => open()}>＋ Thêm khóa học</button></PermissionGate></div>
+    <div className="toolbar"><input aria-label="Tìm khóa học" value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm tên khóa học" /><select aria-label="Lọc xuất bản" value={published} onChange={e => setPublished(e.target.value)}><option value="">Tất cả trạng thái</option><option value="true">Đang hiển thị</option><option value="false">Đang ẩn</option></select><button className="secondary-button" onClick={() => void load()}>Tìm kiếm</button></div>
+    {error && <p className="alert error">{error}</p>}
+    <div className="table-card"><table><thead><tr><th>Khóa học</th><th>Giảng viên</th><th>Học phí</th><th>Sĩ số</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{items.map(course => <tr key={course.id}><td><strong>{course.name}</strong><small>{course.category}</small></td><td>{course.instructor}</td><td>{course.tuition.toLocaleString('vi-VN')} ₫</td><td>{course.enrolledCount}/{course.capacity}</td><td><span className={`badge ${course.isPublished ? 'active' : 'muted'}`}>{course.isPublished ? 'Hiển thị' : 'Đang ẩn'}</span></td><td><div className="row-actions"><PermissionGate permission="courses:write"><button onClick={() => open(course)}>Sửa</button></PermissionGate><PermissionGate permission="courses:delete"><button className="danger" onClick={() => void remove(course)}>Xóa</button></PermissionGate></div></td></tr>)}</tbody></table>{!items.length && <p className="empty">Không có khóa học phù hợp.</p>}</div>
+    {editing && <Modal title={editing === 'new' ? 'Thêm khóa học' : 'Cập nhật khóa học'} onClose={() => setEditing(null)}><form className="form-grid" onSubmit={submit}><label className="span-2">Tên khóa học<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></label><label>Danh mục<input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required /></label><label>Giảng viên<input value={form.instructor} onChange={e => setForm({ ...form, instructor: e.target.value })} required /></label><label>Học phí<input type="number" min="0" value={form.tuition} onChange={e => setForm({ ...form, tuition: Number(e.target.value) })} required /></label><label>Sức chứa<input type="number" min="1" value={form.capacity} onChange={e => setForm({ ...form, capacity: Number(e.target.value) })} required /></label><label className="span-2">Mô tả ngắn<textarea value={form.shortDescription} onChange={e => setForm({ ...form, shortDescription: e.target.value })} required /></label><label className="span-2">Mô tả chi tiết<textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required /></label><label className="check span-2"><input type="checkbox" checked={form.isPublished} onChange={e => setForm({ ...form, isPublished: e.target.checked })} /> Hiển thị khóa học cho học viên</label>{error && <p className="alert error span-2">{error}</p>}<div className="modal-actions span-2"><button type="button" className="secondary-button" onClick={() => setEditing(null)}>Hủy</button><button className="primary-button" disabled={busy}>{busy ? 'Đang lưu…' : 'Lưu'}</button></div></form></Modal>}
+  </>;
+}
+

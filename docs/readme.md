@@ -1,6 +1,8 @@
 # Tài liệu kiểm thử và bài nộp
 
-Đã có API tài khoản và hồ sơ, kết nối PostgreSQL thật, migration và integration test console. Collection tài khoản nằm ở `pks-auth.postman_collection.json`; import vào Postman, điền biến password và email test của bạn rồi chạy Register → Login → Me → Update → Logout. Login tự lưu accessToken vào collection variable; xóa token trước khi export/chia sẻ. Google request chỉ chạy khi có Client ID và Google ID token thật. Các API khóa học/ghi danh chưa được triển khai; collection này chưa phải bộ bài nộp đầy đủ. Chưa có ảnh kiểm thử Postman hoặc ERD toàn bộ bài.
+Đã có Auth/Profile và CRUD User/Course/Enrollment với PostgreSQL thật. Collection tài khoản nằm ở `pks-auth.postman_collection.json`; collection CRUD tại `pks-crud.postman_collection.json`. ERD ở `erd.mmd` (Mermaid). Chưa có ảnh kiểm thử Postman; cần chạy Postman thật và chụp request/response khi hoàn thiện bài nộp.
+
+Với CRUD Collection: chạy `npm run db:migrate`, `npm run db:seed` trong backend, bật backend rồi chạy collection theo thứ tự. Collection dùng tài khoản demo local, tự giữ token/ID; tạo User/Course/Enrollment test và xóa ở nhóm cuối. Nếu dừng giữa chừng, có thể còn dữ liệu Postman test; không chạy đồng thời hai lượt cùng collection variables. Google chỉ nằm trong Auth Collection và cần token Google thật. Xóa token khỏi variables trước khi export/chia sẻ.
 
 ## Những file cần bổ sung theo tiến độ
 
@@ -25,4 +27,4 @@
 
 Ảnh phải thể hiện method, URL, body cần thiết và response/status. Không chụp secret thật hoặc token còn dùng trong môi trường khác. Console log của integration test là hỗ trợ, không thay thế ảnh Postman bắt buộc. Test đồng thời nên tự động hóa; các request gửi tuần tự trong Postman chưa chứng minh được chống race condition.
 
-Chạy `npm run test:integration` từ root ứng dụng sau khi cấu hình DB và chạy migration trong backend. Test đã bao phủ register/login/profile/logout, quyền sửa hồ sơ và Google bằng provider stub. Các ca khóa học/ghi danh ở bảng trên còn phải triển khai.
+Chạy `npm run test:integration` từ root ứng dụng sau khi cấu hình DB và chạy migration. 14 nhóm test đã bao phủ Auth/Profile, User/Course/Enrollment CRUD, phân quyền, validation, ngày Việt Nam, duplicate enrollment, capacity concurrency, rollback và cancel/delete đồng thời. Test tự dọn fixture, không xóa/reset toàn database. Google dùng provider stub, không phải kiểm thử OAuth trực tiếp.

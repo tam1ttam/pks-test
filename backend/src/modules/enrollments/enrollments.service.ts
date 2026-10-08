@@ -1,0 +1,104 @@
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
+import { randomUUID } from 'node:crypto';
+import { Enrollment, EnrollmentStatus } from '../../database/entities/enrollment.entity';
+import { User } from '../../database/entities/user.entity';
+import { Course } from '../../database/entities/course.entity';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
+import { EnrollmentQueryDto } from './dto/enrollment-query.dto';
+import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
+import { rethrowDatabaseError } from '../../common/utils/database-error';
+import { vietnamDate } from '../../common/utils/date';
+
+@Injectable()
+export class EnrollmentsService {
+  constructor(private readonly db: DataSource) {}
+  private present(enrollment: Enrollment) {
+    return {
+      id: enrollment.id, studentId: enrollment.studentId, courseId: enrollment.courseId,
+      status: enrollment.status, enrolledAt: enrollment.enrolledAt,
+      enrolledDate: vietnamDate(enrollment.enrolledAt), updatedAt: enrollment.updatedAt,
+      student: { id: enrollment.student.id, fullName: enrollment.student.fullName, email: enrollment.student.email },
+      course: { ...enrollment.course, availability: enrollment.course.enrolledCount < enrollment.course.capacity ? 'AVAILABLE' : 'FULL' },
+    };
+  }
+  private checkOwner(enrollment: Enrollment, account: AuthUser) {
+    if (account.user.role === 'STUDENT' && enrollment.studentId !== account.user.id) throw new NotFoundException('Không tìm thấy ghi danh.');
+  }
+  private async read(manager: EntityManager, id: string) {
+    const enrollment = await manager.findOne(Enrollment, { where: { id }, relations: { student: true, course: true } });
+    if (!enrollment) throw new NotFoundException('Không tìm thấy ghi danh.');
+    return enrollment;
+  }
+  async find(id: string, account: AuthUser) {
+    const enrollment = await this.read(this.db.manager, id);
+    this.checkOwner(enrollment, account);
+    return this.present(enrollment);
+  }
+  async list(query: EnrollmentQueryDto, account: AuthUser, own = false, courseId?: string) {
+    const ownerId = own || account.user.role === 'STUDENT' ? account.user.id : query.studentId;
+    const qb = this.db.getRepository(Enrollment).createQueryBuilder('enrollment').innerJoinAndSelect('enrollment.student', 'student').innerJoinAndSelect('enrollment.course', 'course');
+    if (ownerId) qb.andWhere('enrollment.studentId = :studentId', { studentId: ownerId });
+    if (courseId || query.courseId) qb.andWhere('enrollment.courseId = :courseId', { courseId: courseId || query.courseId });
+    if (query.status) qb.andWhere('enrollment.status = :status', { status: query.status });
+    if (query.search) qb.andWhere('(course.name ILIKE :search OR student.fullName ILIKE :search OR student.email ILIKE :search)', { search: `%${query.search}%` });
+    if (courseId && !await this.db.getRepository(Course).existsBy({ id: courseId })) throw new NotFoundException('Không tìm thấy khóa học.');
+    const [items, total] = await qb.orderBy('enrollment.enrolledAt', 'DESC').addOrderBy('enrollment.id', 'ASC').skip((query.page - 1) * query.limit).take(query.limit).getManyAndCount();
+    return { items: items.map(item => this.present(item)), total, page: query.page, limit: query.limit };
+  }
+  // Every enrollment mutation locks User -> Course -> Enrollment in this order.
+  private async lockCourse(manager: EntityManager, studentId: string, courseId: string) {
+    const student = await manager.findOne(User, { where: { id: studentId }, lock: { mode: 'pessimistic_write' } });
+    if (!student) throw new NotFoundException('Không tìm thấy học viên.');
+    if (student.role !== 'STUDENT') throw new BadRequestException('Chỉ tài khoản Student được ghi danh.');
+    const course = await manager.findOne(Course, { where: { id: courseId }, lock: { mode: 'pessimistic_write' } });
+    if (!course) throw new NotFoundException('Không tìm thấy khóa học.');
+    return course;
+  }
+  private requireSeat(course: Course) {
+    if (!course.isPublished) throw new ConflictException('Khóa học đang ẩn, không nhận ghi danh.');
+    if (course.enrolledCount >= course.capacity) throw new ConflictException('Khóa học đã hết chỗ.');
+  }
+  async create(dto: CreateEnrollmentDto, account: AuthUser) {
+    const studentId = account.user.role === 'STUDENT' ? account.user.id : dto.studentId;
+    if (account.user.role === 'STUDENT' && dto.studentId !== undefined && dto.studentId !== account.user.id) throw new ForbiddenException('Không được ghi danh thay học viên khác.');
+    if (!studentId) throw new BadRequestException('Admin phải chọn studentId.');
+    try {
+      return await this.db.transaction(async manager => {
+        const course = await this.lockCourse(manager, studentId, dto.courseId);
+        if (await manager.existsBy(Enrollment, { studentId, courseId: dto.courseId })) throw new ConflictException('Học viên đã có ghi danh cho khóa học này. Dùng PATCH để kích hoạt lại nếu đã hủy.');
+        this.requireSeat(course);
+        const enrollment = await manager.save(Enrollment, { id: randomUUID(), studentId, courseId: dto.courseId, status: 'ENROLLED' });
+        course.enrolledCount += 1;
+        await manager.save(course);
+        return this.present(await this.read(manager, enrollment.id));
+      });
+    } catch (error) { rethrowDatabaseError(error); }
+  }
+  async change(id: string, status: EnrollmentStatus | 'DELETE', account: AuthUser) {
+    try {
+      return await this.db.transaction(async manager => {
+        const initial = await manager.findOneBy(Enrollment, { id });
+        if (!initial) throw new NotFoundException('Không tìm thấy ghi danh.');
+        this.checkOwner(initial, account);
+        const course = await this.lockCourse(manager, initial.studentId, initial.courseId);
+        const enrollment = await manager.findOne(Enrollment, { where: { id }, lock: { mode: 'pessimistic_write' } });
+        if (!enrollment) throw new NotFoundException('Không tìm thấy ghi danh.');
+        if (status === 'DELETE') {
+          if (enrollment.status === 'ENROLLED') course.enrolledCount -= 1;
+          await manager.remove(enrollment);
+          await manager.save(course);
+          return;
+        }
+        if (enrollment.status !== status) {
+          if (status === 'ENROLLED') { this.requireSeat(course); course.enrolledCount += 1; }
+          else course.enrolledCount -= 1;
+          enrollment.status = status;
+          await manager.save(enrollment);
+          await manager.save(course);
+        }
+        return this.present(await this.read(manager, id));
+      });
+    } catch (error) { rethrowDatabaseError(error); }
+  }
+}

@@ -5,7 +5,7 @@ import { AppValidationPipe } from '../pipes/app-validation.pipe';
 
 export function setupApp(app: INestApplication) {
   app.setGlobalPrefix('api');
-  app.enableCors({ origin: app.get(ConfigService).getOrThrow<string>('frontendUrl') });
+  app.enableCors({ origin: app.get(ConfigService).getOrThrow<string[]>('frontendUrls') });
   app.useGlobalPipes(new AppValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter());
 }

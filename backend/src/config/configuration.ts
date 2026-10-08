@@ -1,6 +1,7 @@
 export default () => ({
-  port: Number(process.env.PORT || 3000),
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  port: Number(process.env.PORT || 3030),
+  frontendUrls: (process.env.FRONTEND_URL || 'http://localhost:5173,http://localhost:5174')
+    .split(',').map(origin => origin.trim()).filter(Boolean),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
 });
 

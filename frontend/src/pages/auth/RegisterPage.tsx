@@ -20,9 +20,9 @@ export default function RegisterPage() {
   return <>
     <p className="eyebrow">BẮT ĐẦU HÀNH TRÌNH</p><h2>Tạo tài khoản</h2><p className="muted">Rất vui được đồng hành cùng bạn.</p>
     <form onSubmit={submit}><fieldset disabled={busy}>
-      <Input label="Họ và tên" autoComplete="name" placeholder="Nguyễn Minh Anh" value={fullName} onChange={e => setFullName(e.target.value)} required minLength={2} maxLength={100} />
-      <Input label="Email" type="email" autoComplete="email" placeholder="ban@example.com" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
-      <Input label="Mật khẩu" type="password" autoComplete="new-password" placeholder="Ít nhất 8 ký tự" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} maxLength={72} />
+      <Input label="Họ và tên" autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} required minLength={2} maxLength={100} />
+      <Input label="Email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
+      <Input label="Mật khẩu" type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} maxLength={72} />
       {error && <p className="notice error" role="alert">{error}</p>}
       <Button type="submit" disabled={busy}>{busy ? 'Đang tạo tài khoản…' : 'Tạo tài khoản'}<span aria-hidden="true">↗</span></Button>
     </fieldset></form>
