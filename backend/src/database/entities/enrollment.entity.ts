@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, CreateDa
 import { Course } from './course.entity';
 import { User } from './user.entity';
 
-export type EnrollmentStatus = 'ENROLLED' | 'CANCELLED';
+export type EnrollmentStatus = 'ENROLLED' | 'CANCEL_REQUESTED' | 'CANCELLED';
 
 @Entity('enrollments')
 @Unique('uq_enrollment_student_course', ['studentId', 'courseId'])

@@ -3,6 +3,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 import { errorMessage } from '../services/api';
 import { useAuth } from '../store/auth.store';
+import { showToast } from '../components/Toast';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage() {
   const current = useAuth(state => state.user); const signIn = useAuth(state => state.signIn);
@@ -14,8 +16,8 @@ export default function LoginPage() {
     try {
       const response = await authService.login(email, password);
       if (response.user.role !== 'ADMIN') throw new Error('Cổng này chỉ dành cho Admin.');
-      signIn(response); navigate('/', { replace: true });
-    } catch (reason) { setError(errorMessage(reason)); }
+      signIn(response); showToast('Đăng nhập quản trị thành công.'); navigate('/', { replace: true });
+    } catch (reason) { const message=errorMessage(reason); setError(message); showToast(message,'error'); }
     finally { setBusy(false); }
   }
   return <main className="login-page">
@@ -23,7 +25,7 @@ export default function LoginPage() {
     <section className="login-panel"><form onSubmit={submit} className="login-card">
       <p className="eyebrow">CỔNG QUẢN TRỊ</p><h2>Đăng nhập quản trị</h2><p className="subtle">Sử dụng tài khoản Admin.</p>
       <label>Email<input type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-      <label>Mật khẩu<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+      <label>Mật khẩu<PasswordInput autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
       {error && <p className="alert error" role="alert">{error}</p>}
       <button className="primary-button full" disabled={busy}>{busy ? 'Đang đăng nhập…' : 'Đăng nhập'}</button>
       <p className="demo-account">Demo: admin@pks.demo / PksDemo@123</p>

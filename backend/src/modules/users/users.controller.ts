@@ -11,6 +11,6 @@ export class UsersController {
   constructor(private readonly users: UsersService) {}
   @Get('me') me(@CurrentUser() account: AuthUser) { return this.users.publicUser(account.user); }
   @Patch('me') update(@CurrentUser() account: AuthUser, @Body() dto: UpdateUserDto) {
-    return this.users.update(account.user.id, dto.fullName);
+    return this.users.update(account.user.id, dto.fullName, dto.avatarUrl);
   }
 }

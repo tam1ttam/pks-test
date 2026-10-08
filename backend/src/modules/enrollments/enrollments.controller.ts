@@ -17,6 +17,8 @@ export class EnrollmentsController {
   @Get() @RequirePermissions('enrollments:read') list(@Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) { return this.enrollments.list(query, account); }
   @Get('me') me(@Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) { return this.enrollments.list(query, account, true); }
   @Get(':code') find(@Param('code') code: string, @CurrentUser() account: AuthUser) { return this.enrollments.find(code, account); }
+  @Post(':code/cancel-request') requestCancellation(@Param('code') code: string, @CurrentUser() account: AuthUser) { return this.enrollments.requestCancellation(code, account); }
+  @Post(':code/reenroll') reenroll(@Param('code') code: string, @CurrentUser() account: AuthUser) { return this.enrollments.reenroll(code, account); }
   @Patch(':code') update(@Param('code') code: string, @Body() dto: UpdateEnrollmentDto, @CurrentUser() account: AuthUser) { return this.enrollments.change(code, dto.status, account); }
   @Delete(':code') @RequirePermissions('enrollments:delete') @HttpCode(204)
   async remove(@Param('code') code: string, @CurrentUser() account: AuthUser) { await this.enrollments.change(code, 'DELETE', account); }

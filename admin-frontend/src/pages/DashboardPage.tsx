@@ -24,6 +24,7 @@ export default function DashboardPage() {
       <Link to="/courses" className="stat-card"><span>Khóa học</span><strong>{stats.courses}</strong><small>Quản lý nội dung và sĩ số →</small></Link>
       <Link to="/enrollments" className="stat-card"><span>Ghi danh</span><strong>{stats.enrollments}</strong><small>Theo dõi trạng thái học viên →</small></Link>
     </section>
+    <section className="chart-panel"><h2>Biểu đồ quy mô hệ thống</h2><div className="bar-chart">{[['Người dùng', stats.users, '#6254e8'], ['Khóa học', stats.courses, '#31a56d'], ['Ghi danh', stats.enrollments, '#e4a23a']].map(([label, value, color]) => { const amount = Number(value) || 0; const max = Math.max(Number(stats.users) || 0, Number(stats.courses) || 0, Number(stats.enrollments) || 0, 1); return <div className="chart-row" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(5, amount / max * 100)}%`, background: String(color) }} /></div><strong>{value}</strong></div>; })}</div></section>
     <section className="info-panel"><h2>Quyền quản trị</h2><div className="permission-row"><b>ADMIN</b><span>Toàn quyền người dùng, khóa học và ghi danh.</span></div></section>
   </>;
 }

@@ -20,7 +20,7 @@ export class EnrollmentsService {
       status: enrollment.status, enrolledAt: enrollment.enrolledAt,
       enrolledDate: vietnamDate(enrollment.enrolledAt), updatedAt: enrollment.updatedAt,
       student: { code: enrollment.student.code, fullName: enrollment.student.fullName, email: enrollment.student.email },
-      course: { code: enrollment.course.code, name: enrollment.course.name, category: enrollment.course.category, instructor: enrollment.course.instructor, shortDescription: enrollment.course.shortDescription, description: enrollment.course.description, tuition: enrollment.course.tuition, capacity: enrollment.course.capacity, enrolledCount: enrollment.course.enrolledCount, isPublished: enrollment.course.isPublished, availability: enrollment.course.enrolledCount < enrollment.course.capacity ? 'AVAILABLE' : 'FULL' },
+      course: { code: enrollment.course.code, name: enrollment.course.name, categoryCode: enrollment.course.categoryCode, category: enrollment.course.category, instructor: enrollment.course.instructor, shortDescription: enrollment.course.shortDescription, description: enrollment.course.description, tuition: enrollment.course.tuition, capacity: enrollment.course.capacity, enrolledCount: enrollment.course.enrolledCount, isPublished: enrollment.course.isPublished, imageUrl: enrollment.course.imageUrl, availability: enrollment.course.enrolledCount < enrollment.course.capacity ? 'AVAILABLE' : 'FULL' },
     };
   }
   private checkOwner(enrollment: Enrollment, account: AuthUser) {
@@ -77,24 +77,51 @@ export class EnrollmentsService {
       });
     } catch (error) { rethrowDatabaseError(error); }
   }
+  async requestCancellation(code: string, account: AuthUser) {
+    if (account.user.role !== 'STUDENT') throw new ForbiddenException('Ch? h?c vi?n m?i g?i y?u c?u h?y ghi danh.');
+    const enrollment = await this.read(this.db.manager, code);
+    this.checkOwner(enrollment, account);
+    if (enrollment.status !== 'ENROLLED') throw new ConflictException('Ghi danh n?y kh?ng th? g?i y?u c?u h?y.');
+    enrollment.status = 'CANCEL_REQUESTED';
+    await this.db.getRepository(Enrollment).save(enrollment);
+    return this.present(await this.read(this.db.manager, code));
+  }
+  async reenroll(code: string, account: AuthUser) {
+    if (account.user.role !== 'STUDENT') throw new ForbiddenException('Chỉ học viên mới có thể ghi danh lại.');
+    return this.db.transaction(async manager => {
+      const initial = await this.read(manager, code);
+      this.checkOwner(initial, account);
+      if (initial.status !== 'CANCELLED') throw new ConflictException('Chỉ có thể ghi danh lại sau khi yêu cầu hủy đã được duyệt.');
+      const retryAt = initial.updatedAt.getTime() + 60_000;
+      if (Date.now() < retryAt) throw new ConflictException({ message: 'Hãy thử ghi danh lại sau 1 phút.', retryAt: new Date(retryAt).toISOString() });
+      const { course } = await this.lockCourse(manager, initial.studentId, undefined, initial.course.code);
+      const enrollment = await manager.findOne(Enrollment, { where: { code }, lock: { mode: 'pessimistic_write' } });
+      if (!enrollment || enrollment.status !== 'CANCELLED') throw new ConflictException('Ghi danh đã thay đổi trạng thái.');
+      this.requireSeat(course);
+      enrollment.status = 'ENROLLED'; course.enrolledCount += 1;
+      await manager.save(enrollment); await manager.save(course);
+      return this.present(await this.read(manager, code));
+    });
+  }
   async change(code: string, status: EnrollmentStatus | 'DELETE', account: AuthUser) {
     try {
       return await this.db.transaction(async manager => {
         const initial = await manager.findOneBy(Enrollment, { code });
         if (!initial) throw new NotFoundException('Không tìm thấy ghi danh.');
         this.checkOwner(initial, account);
+        if (account.user.role === 'STUDENT') throw new ForbiddenException('Y?u c?u h?y ghi danh ph?i ???c Admin duy?t.');
         const { course } = await this.lockCourse(manager, initial.studentId, undefined, (await manager.findOneByOrFail(Course, { id: initial.courseId })).code);
         const enrollment = await manager.findOne(Enrollment, { where: { code }, lock: { mode: 'pessimistic_write' } });
         if (!enrollment) throw new NotFoundException('Không tìm thấy ghi danh.');
         if (status === 'DELETE') {
-          if (enrollment.status === 'ENROLLED') course.enrolledCount -= 1;
+          if (enrollment.status !== 'CANCELLED') course.enrolledCount -= 1;
           await manager.remove(enrollment);
           await manager.save(course);
           return;
         }
         if (enrollment.status !== status) {
-          if (status === 'ENROLLED') { this.requireSeat(course); course.enrolledCount += 1; }
-          else course.enrolledCount -= 1;
+          if (status === 'ENROLLED' && enrollment.status === 'CANCELLED') { this.requireSeat(course); course.enrolledCount += 1; }
+          if (status === 'CANCELLED' && enrollment.status !== 'CANCELLED') course.enrolledCount -= 1;
           enrollment.status = status;
           await manager.save(enrollment);
           await manager.save(course);

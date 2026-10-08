@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { authService } from '../../../services/auth.service';
 import { errorMessage } from '../../../services/api';
+import { showToast } from '../../../components/common/Toast';
 
 export default function GoogleSignIn({ busy, setBusy, setError }: { busy: boolean; setBusy: (value: boolean) => void; setError: (value: string) => void }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -21,8 +22,9 @@ export default function GoogleSignIn({ busy, setBusy, setError }: { busy: boolea
             try {
               if (!response.credential) throw new Error('Không nhận được xác thực Google.');
               signIn(await authService.google(response.credential));
+              showToast('Đăng nhập Google thành công.');
               navigate('/', { replace: true });
-            } catch (error) { setError(errorMessage(error)); }
+            } catch (error) { const message=errorMessage(error); setError(message); showToast(message, 'error'); }
             finally { setBusy(false); }
           }} onError={() => setError('Không đăng nhập được bằng Google. Vui lòng thử lại.')} />
       </div>
