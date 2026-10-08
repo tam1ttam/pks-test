@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/courses?page=1&limit=10&isPublished=true"
+method: GET
+queryParams:
+  page: "1"
+  limit: "10"
+  isPublished: "true"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json()).to.have.keys('items', 'total', 'page', 'limit');
+    language: text/javascript
+order: 3000

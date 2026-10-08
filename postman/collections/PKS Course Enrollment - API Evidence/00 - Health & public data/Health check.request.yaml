@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/"
+method: GET
+scripts:
+  - type: beforeRequest
+    code: |-
+      const suffix = Date.now().toString();
+      pm.collectionVariables.set('suffix', suffix);
+      pm.collectionVariables.set('studentEmail', `postman.${suffix}@example.com`);
+    language: text/javascript
+  - type: afterResponse
+    code: pm.test('API is healthy', () => { pm.response.to.have.status(200); pm.expect(pm.response.text()).to.include('Hello World'); });
+    language: text/javascript
+order: 1000

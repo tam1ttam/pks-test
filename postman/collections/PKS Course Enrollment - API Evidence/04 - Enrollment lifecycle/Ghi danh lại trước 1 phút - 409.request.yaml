@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/enrollments/{{enrollmentCode}}/reenroll"
+method: POST
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 409', () => pm.response.to.have.status(409));
+    language: text/javascript
+order: 8000

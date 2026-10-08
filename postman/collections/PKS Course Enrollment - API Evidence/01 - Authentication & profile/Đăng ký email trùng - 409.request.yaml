@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Duplicate Student",
+      "email": "{{studentEmail}}",
+      "password": "{{testPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 409', () => pm.response.to.have.status(409));
+    language: text/javascript
+order: 2000

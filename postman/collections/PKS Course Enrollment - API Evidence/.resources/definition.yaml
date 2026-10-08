@@ -1,0 +1,14 @@
+$kind: collection
+description: "Collection chạy tuần tự để kiểm thử luồng Student/Admin, CRUD, phân quyền và lỗi quan trọng. Trước khi chạy: npm run db:migrate && npm run db:seed, sau đó npm run start:dev trong backend. Chạy toàn bộ collection bằng Collection Runner; cookie client/admin được Postman lưu riêng."
+variables:
+  baseUrl: https://cellvany.id.vn/enrol/pks-test/api
+  adminEmail: admin@pks.demo
+  adminPassword: PksDemo@123
+  testPassword: Postman@123
+  suffix: ""
+  studentEmail: ""
+  studentCode: ""
+  secondStudentCode: ""
+  categoryCode: ""
+  courseCode: ""
+  enrollmentCode: ""

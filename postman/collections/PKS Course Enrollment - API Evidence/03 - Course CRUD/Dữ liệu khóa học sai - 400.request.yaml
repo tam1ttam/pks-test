@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/courses"
+method: POST
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "name": "Invalid course",
+      "categoryCode": "{{categoryCode}}",
+      "instructor": "PKS",
+      "shortDescription": "invalid",
+      "description": "invalid",
+      "tuition": -1,
+      "capacity": 0
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 400', () => pm.response.to.have.status(400));
+    language: text/javascript
+order: 4000

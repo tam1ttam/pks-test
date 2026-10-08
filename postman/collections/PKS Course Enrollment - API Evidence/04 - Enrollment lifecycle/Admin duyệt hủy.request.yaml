@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/enrollments/{{enrollmentCode}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "status": "CANCELLED"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().status).to.eql('CANCELLED');
+    language: text/javascript
+order: 7000

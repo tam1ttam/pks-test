@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/enrollments/{{enrollmentCode}}/cancel-request"
+method: POST
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 201', () => pm.response.to.have.status(201));
+      pm.expect(pm.response.json().status).to.eql('CANCEL_REQUESTED');
+    language: text/javascript
+order: 6000

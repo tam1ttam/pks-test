@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/users/{{secondStudentCode}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "isActive": true
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 5000

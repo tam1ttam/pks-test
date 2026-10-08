@@ -3,6 +3,7 @@ import type { Course, Enrollment, Page, Role, User } from '../types';
 
 export interface CourseInput { name: string; categoryCode: string; instructor: string; shortDescription: string; description: string; tuition: number; capacity: number; isPublished: boolean; imageUrl?: string | null }
 export interface UserInput { fullName: string; email: string; password?: string; role: Role; isActive?: boolean }
+export interface CategoryItem { code: string; name: string }
 
 export const adminService = {
   async users(params?: Record<string, string | number>) { return (await api.get<Page<User>>('/admin/users', { params })).data; },
@@ -12,7 +13,9 @@ export const adminService = {
   async deleteUsers(codes: string[]) { await api.delete('/admin/users', { data: { codes } }); },
   async resetUserPassword(code: string) { return (await api.post<{ message: string }>(`/admin/users/${code}/reset-password`)).data; },
   async courses(params?: Record<string, string | number | boolean>) { return (await api.get<Page<Course>>('/admin/courses', { params })).data; },
-  async categories() { return (await api.get<{ items: Array<{ code: string; name: string }> }>('/categories')).data.items; },
+  async categories() { return (await api.get<{ items: CategoryItem[] }>('/categories')).data.items; },
+  async createCategory(name: string) { return (await api.post<CategoryItem>('/admin/categories', { name })).data; },
+  async deleteCategory(code: string) { await api.delete(`/admin/categories/${code}`); },
   async createCourse(input: CourseInput) { return (await api.post<Course>('/admin/courses', input)).data; },
   async updateCourse(code: string, input: Partial<CourseInput>) { return (await api.patch<Course>(`/admin/courses/${code}`, input)).data; },
   async deleteCourse(code: string) { await api.delete(`/admin/courses/${code}`); },
