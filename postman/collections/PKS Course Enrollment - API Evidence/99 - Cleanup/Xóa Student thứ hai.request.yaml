@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/users/{{secondStudentCode}}"
+method: DELETE
+headers:
+  X-PKS-Portal: admin
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+order: 3000

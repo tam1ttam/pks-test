@@ -119,6 +119,8 @@ test('Course CRUD: public filtering, admin writes, hide, delete and DTO validati
   assert.equal(created.tuition, 2500000);
   assert.equal(created.enrolledCount, 0);
   assert.equal(created.availability, 'AVAILABLE');
+  const categories = await call('get', '/categories', null).expect(200);
+  assert.ok(categories.body.items.some(category => category.code === created.categoryCode));
   const list = await call('get', `/courses?search=${marker}&category=web&limit=1`, null).expect(200);
   assert.equal(list.body.total, 1);
   assert.equal(list.body.items[0].code, created.code);
@@ -135,6 +137,12 @@ test('Course CRUD: public filtering, admin writes, hide, delete and DTO validati
   await call('delete', `/admin/courses/${created.code}`).expect(204);
   await call('delete', `/admin/courses/${created.code}`).expect(404);
   console.log('[PASS] Course CRUD, publication, pagination/search/category, input validation');
+});
+
+test('Image upload endpoint rejects a missing multipart file before contacting Cloudinary', async () => {
+  const response = await call('post', '/uploads/image', 's1').expect(400);
+  assert.match(JSON.stringify(response.body), /file|tệp|image/i);
+  console.log('[PASS] image upload validates the multipart file before external upload');
 });
 
 test('Enrollment CRUD: ownership, counts, cancellation, restoration, protected history', async () => {

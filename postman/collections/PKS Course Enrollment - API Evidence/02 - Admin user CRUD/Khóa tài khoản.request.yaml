@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/users/{{secondStudentCode}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Postman Student Two Updated",
+      "isActive": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().isActive).to.eql(false);
+    language: text/javascript
+order: 4000

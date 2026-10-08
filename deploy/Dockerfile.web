@@ -1,0 +1,25 @@
+FROM node:20-alpine AS client
+WORKDIR /app
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+ARG VITE_API_URL=/enrol/pks-test/api
+ARG CLIENT_BASE_PATH=/enrol/pks-test/
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run typecheck && npx vite build --base=$CLIENT_BASE_PATH
+
+FROM node:20-alpine AS admin
+WORKDIR /app
+COPY admin-frontend/package*.json ./
+RUN npm ci
+COPY admin-frontend/ ./
+ARG VITE_API_URL=/enrol/pks-test/api
+ARG ADMIN_BASE_PATH=/enrol/pks-test/admin/
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run typecheck && npx vite build --base=$ADMIN_BASE_PATH
+
+FROM nginx:1.27-alpine
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=client /app/dist /usr/share/nginx/html/enrol/pks-test
+COPY --from=admin /app/dist /usr/share/nginx/html/enrol/pks-test/admin
+EXPOSE 80

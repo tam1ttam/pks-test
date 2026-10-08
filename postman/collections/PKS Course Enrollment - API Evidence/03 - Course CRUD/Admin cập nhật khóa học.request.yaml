@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/courses/{{courseCode}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "tuition": 1750000,
+      "shortDescription": "Đã cập nhật bằng Postman"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().tuition).to.eql(1750000);
+    language: text/javascript
+order: 3000

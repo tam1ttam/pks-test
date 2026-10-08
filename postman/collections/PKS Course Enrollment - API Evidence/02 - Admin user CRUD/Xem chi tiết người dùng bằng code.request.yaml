@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/users/{{secondStudentCode}}"
+method: GET
+headers:
+  X-PKS-Portal: admin
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json()).not.to.have.property('id');
+    language: text/javascript
+order: 3000

@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/enrollments"
+method: POST
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "courseCode": "{{courseCode}}",
+      "studentCode": "{{secondStudentCode}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 409', () => pm.response.to.have.status(409));
+    language: text/javascript
+order: 3000

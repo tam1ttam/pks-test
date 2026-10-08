@@ -30,10 +30,15 @@ DO $$ BEGIN
  END IF;
 END $$;
 
-INSERT INTO courses (id, code, name, category, instructor, short_description, description, tuition, capacity, is_published) VALUES
-('20000000-0000-4000-8000-000000000001', 'CRS-DEMOCOURSE01', 'React thực chiến', 'Web Development', 'Nguyễn Hải', 'Xây dựng ứng dụng React với TypeScript.', 'Component, hooks, routing và tích hợp REST API qua một dự án thực tế.', 2500000, 20, true),
-('20000000-0000-4000-8000-000000000002', 'CRS-DEMOCOURSE02', 'MOS Excel căn bản', 'MOS', 'Trần Mai', 'Làm chủ bảng tính Excel.', 'Thao tác bảng tính, công thức và trình bày báo cáo theo chuẩn MOS.', 1500000, 1, true),
-('20000000-0000-4000-8000-000000000003', 'CRS-DEMOCOURSE03', 'NestJS và PostgreSQL', 'Web Development', 'Lê Dũng', 'Xây dựng backend với NestJS.', 'REST API, xác thực, cơ sở dữ liệu và transaction. Khóa đang ở trạng thái ẩn.', 3000000, 15, false)
+INSERT INTO categories (id, code, name, is_active) VALUES
+('40000000-0000-4000-8000-000000000001', 'CAT-WEB', 'Web Development', true),
+('40000000-0000-4000-8000-000000000002', 'CAT-MOS', 'MOS', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO courses (id, code, name, category, category_code, instructor, short_description, description, tuition, capacity, is_published) VALUES
+('20000000-0000-4000-8000-000000000001', 'CRS-DEMOCOURSE01', 'React thực chiến', 'Web Development', 'CAT-WEB', 'Nguyễn Hải', 'Xây dựng ứng dụng React với TypeScript.', 'Component, hooks, routing và tích hợp REST API qua một dự án thực tế.', 2500000, 20, true),
+('20000000-0000-4000-8000-000000000002', 'CRS-DEMOCOURSE02', 'MOS Excel căn bản', 'MOS', 'CAT-MOS', 'Trần Mai', 'Làm chủ bảng tính Excel.', 'Thao tác bảng tính, công thức và trình bày báo cáo theo chuẩn MOS.', 1500000, 1, true),
+('20000000-0000-4000-8000-000000000003', 'CRS-DEMOCOURSE03', 'NestJS và PostgreSQL', 'Web Development', 'CAT-WEB', 'Lê Dũng', 'Xây dựng backend với NestJS.', 'REST API, xác thực, cơ sở dữ liệu và transaction. Khóa đang ở trạng thái ẩn.', 3000000, 15, false)
 ON CONFLICT (id) DO NOTHING;
 
 SELECT id FROM courses WHERE id IN (

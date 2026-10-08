@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/users"
+method: POST
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Postman Student Two",
+      "email": "postman.two.{{suffix}}@example.com",
+      "password": "{{testPassword}}",
+      "role": "STUDENT"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json(); pm.expect(json).not.to.have.property('id'); pm.collectionVariables.set('secondStudentCode', json.code);
+    language: text/javascript
+order: 1000

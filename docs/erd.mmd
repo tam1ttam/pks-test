@@ -1,6 +1,7 @@
 erDiagram
     USERS ||--o{ AUTH_SESSIONS : authenticates
     USERS ||--o{ ENROLLMENTS : registers
+    CATEGORIES ||--o{ COURSES : classifies
     COURSES ||--o{ ENROLLMENTS : contains
     USERS {
         uuid id PK
@@ -9,10 +10,18 @@ erDiagram
         varchar email UK
         varchar password_hash "nullable, bcrypt"
         varchar google_id UK "nullable"
+        varchar avatar_url "nullable"
         varchar role "STUDENT | ADMIN"
         boolean is_active
         timestamptz created_at
         timestamptz updated_at
+    }
+    CATEGORIES {
+        uuid id PK
+        varchar code UK
+        varchar name UK
+        boolean is_active
+        timestamptz created_at
     }
     AUTH_SESSIONS {
         uuid id PK
@@ -24,6 +33,7 @@ erDiagram
         varchar code UK
         varchar name
         varchar category
+        varchar category_code FK
         varchar instructor
         varchar short_description
         text description
@@ -31,6 +41,7 @@ erDiagram
         integer capacity "1..100000"
         integer enrolled_count "0..capacity, active only"
         boolean is_published
+        varchar image_url "nullable"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -39,7 +50,7 @@ erDiagram
         varchar code UK
         uuid student_id FK "ON DELETE RESTRICT"
         uuid course_id FK "ON DELETE RESTRICT; UNIQUE(student_id,course_id)"
-        varchar status "ENROLLED | CANCELLED"
+        varchar status "ENROLLED | CANCEL_REQUESTED | CANCELLED"
         timestamptz enrolled_at
         timestamptz updated_at
     }

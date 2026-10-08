@@ -1,0 +1,12 @@
+$kind: http-request
+description: Xác nhận API từ chối multipart request không có file; không gọi Cloudinary.
+url: "{{baseUrl}}/uploads/image"
+method: POST
+body:
+  type: formdata
+  content: []
+scripts:
+  - type: afterResponse
+    code: pm.test('HTTP 400', () => pm.response.to.have.status(400));
+    language: text/javascript
+order: 1000

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/enrollments/me?page=1&limit=20"
+method: GET
+queryParams:
+  page: "1"
+  limit: "20"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().items.some(x => x.code === pm.collectionVariables.get('enrollmentCode'))).to.eql(true);
+    language: text/javascript
+order: 4000

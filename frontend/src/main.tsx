@@ -7,6 +7,6 @@ import { ToastViewport } from './components/common/Toast';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter><App /><ToastViewport /></BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}><App /><ToastViewport /></BrowserRouter>
   </React.StrictMode>,
 );

@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/courses"
+method: POST
+headers:
+  Content-Type: application/json
+  X-PKS-Portal: admin
+body:
+  type: json
+  content: |-
+    {
+      "name": "Postman Evidence {{suffix}}",
+      "categoryCode": "{{categoryCode}}",
+      "instructor": "PKS Instructor",
+      "shortDescription": "Khóa học tạo từ Postman",
+      "description": "Dùng để kiểm thử CRUD và ghi danh.",
+      "tuition": 1500000,
+      "capacity": 1,
+      "isPublished": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json(); pm.expect(json).not.to.have.property('id'); pm.collectionVariables.set('courseCode', json.code);
+    language: text/javascript
+order: 1000
