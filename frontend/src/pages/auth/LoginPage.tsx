@@ -28,5 +28,6 @@ export default function LoginPage() {
       </fieldset>
     </form>
     <p className="auth-switch">Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link></p>
+    <p className="auth-about"><Link to="/about">About · README dự án</Link></p>
   </>;
 }

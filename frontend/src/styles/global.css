@@ -43,6 +43,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .google-mark { color: #4285f4; font-size: 18px; font-weight: 700; }
 .auth-switch { text-align: center; font-size: 12px; color: #788177; margin: 30px 0 0; }
 .auth-switch a { margin-left: 4px; font-weight: 600; }
+.auth-about { margin: 14px 0 0; text-align: center; font-size: 12px; }.auth-about a { color: #52675b; font-weight: 600; }
+.about-redirect { min-height: 100dvh; display: grid; place-content: center; gap: 10px; text-align: center; background: #f8f8f3; }.about-redirect p { margin: 0; color: #58675e; }.about-redirect a { font-weight: 700; }
 .copyright { font-size: 10px; color: #969c90; margin: 28px 0 0; }
 .notice { padding: 12px 14px; font-size: 12px; line-height: 1.7; border-radius: 8px; overflow-wrap: anywhere; }
 .error { color: #973b36; background: #faebe7; }
