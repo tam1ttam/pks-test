@@ -6,6 +6,7 @@ export type UserRole = 'STUDENT' | 'ADMIN';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid') id!: string;
+  @Column({ unique: true, length: 16 }) code!: string;
   @Column({ name: 'full_name', length: 100 }) fullName!: string;
   @Column({ unique: true, length: 254 }) email!: string;
   @Column({ name: 'password_hash', type: 'varchar', nullable: true, select: false }) passwordHash!: string | null;

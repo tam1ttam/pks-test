@@ -1,7 +1,7 @@
-import { IsUUID, ValidateIf } from 'class-validator';
+import { IsString, Matches, ValidateIf } from 'class-validator';
 
 export class CreateEnrollmentDto {
-  @IsUUID() courseId!: string;
+  @IsString() @Matches(/^CRS-[A-F0-9]{12}$/) courseCode!: string;
   @ValidateIf((_object, value) => value !== undefined)
-  @IsUUID() studentId?: string;
+  @IsString() @Matches(/^USR-[A-F0-9]{12}$/) studentCode?: string;
 }

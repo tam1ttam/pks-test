@@ -1,4 +1,4 @@
-# PKS Course & Enrollment Portal
+﻿# PKS Course & Enrollment Portal
 
 Project gồm Client React trong `frontend/` (cổng 5173), Admin React trong `admin-frontend/` (cổng 5174), và NestJS + TypeORM + PostgreSQL trong `backend/` (cổng 3030). Hai frontend giữ phiên độc lập để Student và Admin có thể đăng nhập đồng thời.
 
@@ -17,7 +17,7 @@ if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm run dev
 ```
 
-Truy cập http://localhost:5173. Client có trang danh sách `/courses` và chi tiết `/courses/:id`, chỉ hiển thị khóa học đã được Admin xuất bản. `VITE_API_URL=http://localhost:3030/api` phải trỏ đúng backend. FE dùng Axios, Zustand và sessionStorage cho phiên đăng nhập trong cùng tab; tải lại trang sẽ xác minh phiên với API.
+Truy cập http://localhost:5173. Client có trang chủ `/`, danh sách có bộ lọc `/courses`, chi tiết và ghi danh `/courses/:code`, cùng trang `/my-courses`. Client chỉ hiển thị khóa học đã được Admin xuất bản. `VITE_API_URL=http://localhost:3030/api` phải trỏ đúng backend. Backend cấp HttpOnly cookie; Zustand chỉ giữ hồ sơ người dùng trong bộ nhớ và tải lại trang sẽ xác minh phiên với API.
 
 ## Chạy Admin frontend
 
@@ -119,10 +119,10 @@ Google SSO chưa thể kiểm thử thực tế khi chưa cung cấp Client ID. 
 | POST | `/api/auth/register` | Public: fullName, email, password |
 | POST | `/api/auth/login` | Public: email, password |
 | POST | `/api/auth/google` | Public: credential Google ID token |
-| GET | `/api/auth/me` | Bearer JWT |
-| GET | `/api/users/me` | Bearer JWT |
-| PATCH | `/api/users/me` | Bearer JWT, chỉ fullName |
-| POST | `/api/auth/logout` | Bearer JWT, trả 204 và thu hồi phiên hiện tại |
+| GET | `/api/auth/me` | HttpOnly session cookie |
+| GET | `/api/users/me` | HttpOnly session cookie |
+| PATCH | `/api/users/me` | HttpOnly session cookie, chỉ fullName |
+| POST | `/api/auth/logout` | HttpOnly session cookie, trả 204 và thu hồi phiên hiện tại |
 
 Email được chuẩn hóa chữ thường; đăng ký công khai chỉ tạo STUDENT. Mật khẩu tối thiểu 8 ký tự, tối đa 72 byte UTF-8, bcrypt cost 10. JWT mặc định 1 giờ; phiên được lưu trong DB và kiểm tra mỗi request. Email/role/mật khẩu không sửa qua API hồ sơ. Auth có rate limit theo IP (10 request/phút/endpoint); giới hạn chung 120 request/phút/endpoint, dùng bộ nhớ process cho môi trường local.
 
@@ -135,19 +135,21 @@ Mọi endpoint trong bảng có prefix `/api`. Body/query sai trả `400`; chưa
 | Method | Endpoint | Quyền / chức năng |
 | --- | --- | --- |
 | GET / POST | `/admin/users` | ADMIN: danh sách / tạo user |
-| GET / PATCH / DELETE | `/admin/users/:id` | ADMIN: xem / sửa / xóa user |
+| GET / PATCH / DELETE | `/admin/users/:code` | ADMIN: xem / sửa / xóa user |
+| POST | `/admin/users/:code/reset-password` | ADMIN: tạo mật khẩu mới và gửi qua SMTP |
+| DELETE | `/admin/users` | ADMIN: xóa nhiều user theo danh sách code |
 | GET | `/courses` | Public: danh sách khóa đang hiển thị |
-| GET | `/courses/:id` | Public: chi tiết khóa đang hiển thị |
+| GET | `/courses/:code` | Public: chi tiết khóa đang hiển thị |
 | GET / POST | `/admin/courses` | ADMIN: danh sách cả khóa ẩn / tạo khóa |
-| GET / PATCH / DELETE | `/admin/courses/:id` | ADMIN: chi tiết / sửa, ẩn / xóa khóa |
-| POST | `/enrollments` | Student ghi danh mình; ADMIN chọn studentId |
+| GET / PATCH / DELETE | `/admin/courses/:code` | ADMIN: chi tiết / sửa, ẩn / xóa khóa |
+| POST | `/enrollments` | Student ghi danh mình; ADMIN chọn studentCode |
 | GET | `/enrollments` | ADMIN xem mọi ghi danh |
 | GET | `/enrollments/me` | Chỉ ghi danh thuộc user trong JWT |
-| GET / PATCH | `/enrollments/:id` | Chủ ghi danh hoặc ADMIN: xem / đổi trạng thái |
-| DELETE | `/enrollments/:id` | ADMIN: xóa ghi danh, cập nhật count |
-| GET | `/admin/courses/:id/enrollments` | ADMIN: danh sách học viên của khóa |
+| GET / PATCH | `/enrollments/:code` | Chủ ghi danh hoặc ADMIN: xem / đổi trạng thái |
+| DELETE | `/enrollments/:code` | ADMIN: xóa ghi danh, cập nhật count |
+| GET | `/admin/courses/:code/enrollments` | ADMIN: danh sách học viên của khóa |
 
-Danh sách trả `{ items, total, page, limit }`; mặc định page 1, limit 20, tối đa 100. User lọc `search` (họ tên/email), `role`. Course lọc `search` (tên), `category`; Admin thêm `isPublished=true/false`, Public luôn chỉ trả khóa hiển thị. Enrollment lọc `courseId`, `studentId`, `status`, `search` (khóa/họ tên/email). `/enrollments/me` luôn áp dụng user ID từ token dù gửi studentId khác.
+Danh sách trả `{ items, total, page, limit }`; mặc định page 1, limit 20, tối đa 100. User lọc `search` (họ tên/email), `role`. Course lọc `search` (tên), `category`; Admin thêm `isPublished=true/false`, Public luôn chỉ trả khóa hiển thị. Enrollment lọc `courseCode`, `studentCode`, `status`, `search` (khóa/họ tên/email). `/enrollments/me` luôn áp dụng user ID từ token dù gửi studentCode khác.
 
 Ví dụ body tạo khóa:
 
@@ -164,18 +166,18 @@ Ví dụ body tạo khóa:
 }
 ```
 
-Tạo User: `{ "fullName": "Student", "email": "student@example.com", "password": "Demo-password-123", "role": "STUDENT", "isActive": true }`; role mặc định Student và trạng thái mặc định hoạt động. PATCH nhận một phần các trường này. Gửi `{ "isActive": false }` để khóa và thu hồi toàn bộ phiên; tài khoản khóa không thể đăng nhập hoặc tiếp tục gọi API. Admin không thể tự khóa, tự xóa hoặc tự đổi role. Không đổi role hoặc xóa user đã có Enrollment. Email Google không đổi qua API quản trị. Không trả passwordHash/googleId.
+Tạo User: `{ "fullName": "Student", "email": "student@example.com", "password": "Demo-password-123", "role": "STUDENT", "isActive": true }`; role mặc định Student và trạng thái mặc định hoạt động. PATCH chỉ nhận `fullName`, `email`, `role`, `isActive` và không nhận mật khẩu. Gửi `{ "isActive": false }` để khóa và thu hồi toàn bộ phiên; tài khoản khóa không thể đăng nhập hoặc tiếp tục gọi API. Admin không thể tự khóa, tự xóa hoặc tự đổi role. Không đổi role hoặc xóa user đã có Enrollment. Email Google không đổi qua API quản trị. Không trả passwordHash/googleId.
 
-Tạo Enrollment: `{ "courseId": "uuid" }` cho Student; Admin thêm `studentId`. Chỉ Student được ghi danh. PATCH chỉ nhận `{ "status": "ENROLLED" }` hoặc `{ "status": "CANCELLED" }`; không đổi studentId/courseId. Một cặp student-course chỉ có một bản ghi; ghi danh đã hủy phải kích hoạt lại bằng PATCH.
+Tạo Enrollment: `{ "courseCode": "uuid" }` cho Student; Admin thêm `studentCode`. Chỉ Student được ghi danh. PATCH chỉ nhận `{ "status": "ENROLLED" }` hoặc `{ "status": "CANCELLED" }`; không đổi studentCode/courseCode. Một cặp student-course chỉ có một bản ghi; ghi danh đã hủy phải kích hoạt lại bằng PATCH.
 
 `enrolledCount` chỉ đếm `ENROLLED`. API tạo/đổi trạng thái/xóa dùng transaction và khóa User → Course → Enrollment theo cùng thứ tự. Kích hoạt lại kiểm tra chỗ và khóa hiển thị; gọi PATCH cùng trạng thái không cộng/trừ count lần nữa. Khóa đầy/bị ẩn không nhận ghi danh mới. Hủy vẫn được phép khi khóa bị ẩn. Không cho client ghi enrolledCount. Giảm capacity phải >= count hiện tại và khóa Course cùng transaction. FK + unique + check constraint bảo vệ thêm ở database.
 
 Course có lịch sử Enrollment (kể cả CANCELLED) không được xóa; dùng PATCH `isPublished=false`. User có lịch sử Enrollment cũng bị chặn xóa. DELETE Enrollment là thao tác quản trị xóa vĩnh viễn theo yêu cầu CRUD; nếu cần giữ lịch sử, dùng CANCELLED. Không cập nhật Enrollment trực tiếp bằng SQL ngoài seed vì sẽ bỏ qua logic đồng bộ count của service.
 
-Timestamp lưu UTC; response Enrollment có `enrolledAt` ISO và `enrolledDate` dạng `YYYY-MM-DD` theo `Asia/Ho_Chi_Minh`. ERD tại `docs/erd.mmd`. Các tính năng CRUD lần này chỉ ở backend.
+Timestamp lưu UTC; response Enrollment có `enrolledAt` ISO và `enrolledDate` dạng `YYYY-MM-DD` theo `Asia/Ho_Chi_Minh`. ERD tại `docs/erd.mmd`. Client có luồng ghi danh và “Khóa học của tôi”; Admin có CRUD và xem danh sách học viên theo từng khóa.
 
 ## Cấu trúc
 
-Backend: `src/common/`, `config/`, `database/entities/`, `database/migrations/`, `database/seeds/`, `modules/auth/{dto,strategies}`, `modules/users/dto/`. Entity gom tại database để tránh khai báo trùng. JWT strategy xử lý Bearer; login mật khẩu xử lý trong AuthService nên không tạo local.strategy không sử dụng.
+Backend: `src/common/`, `config/`, `database/entities/`, `database/migrations/`, `database/seeds/`, `modules/auth/{dto,strategies}`, `modules/users/dto/`. Entity gom tại database để tránh khai báo trùng. JWT strategy đọc token từ HttpOnly cookie theo từng portal; login mật khẩu xử lý trong AuthService nên không tạo local.strategy không sử dụng.
 
 Frontend: `src/components/{common,ui}`, `hooks/`, `layouts/`, `pages/home/components/`, `pages/auth/components/`, `routes/`, `services/`, `store/`, `styles/`, `types/`, `assets/`, `constants/`, `utils/`. Các thư mục chưa dùng giữ trống local, không tạo `.gitkeep`.

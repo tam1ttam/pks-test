@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
@@ -16,17 +16,17 @@ export class EnrollmentsController {
   @Post() create(@Body() dto: CreateEnrollmentDto, @CurrentUser() account: AuthUser) { return this.enrollments.create(dto, account); }
   @Get() @RequirePermissions('enrollments:read') list(@Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) { return this.enrollments.list(query, account); }
   @Get('me') me(@Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) { return this.enrollments.list(query, account, true); }
-  @Get(':id') find(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() account: AuthUser) { return this.enrollments.find(id, account); }
-  @Patch(':id') update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateEnrollmentDto, @CurrentUser() account: AuthUser) { return this.enrollments.change(id, dto.status, account); }
-  @Delete(':id') @RequirePermissions('enrollments:delete') @HttpCode(204)
-  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() account: AuthUser) { await this.enrollments.change(id, 'DELETE', account); }
+  @Get(':code') find(@Param('code') code: string, @CurrentUser() account: AuthUser) { return this.enrollments.find(code, account); }
+  @Patch(':code') update(@Param('code') code: string, @Body() dto: UpdateEnrollmentDto, @CurrentUser() account: AuthUser) { return this.enrollments.change(code, dto.status, account); }
+  @Delete(':code') @RequirePermissions('enrollments:delete') @HttpCode(204)
+  async remove(@Param('code') code: string, @CurrentUser() account: AuthUser) { await this.enrollments.change(code, 'DELETE', account); }
 }
 
 @Controller('admin/courses')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class CourseEnrollmentsController {
   constructor(private readonly enrollments: EnrollmentsService) {}
-  @Get(':id/enrollments') @RequirePermissions('enrollments:read') list(@Param('id', ParseUUIDPipe) id: string, @Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) {
-    return this.enrollments.list(query, account, false, id);
+  @Get(':code/enrollments') @RequirePermissions('enrollments:read') list(@Param('code') code: string, @Query() query: EnrollmentQueryDto, @CurrentUser() account: AuthUser) {
+    return this.enrollments.list(query, account, false, code);
   }
 }

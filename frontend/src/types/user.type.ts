@@ -1,5 +1,5 @@
 export interface User {
-  id: string;
+  code: string;
   fullName: string;
   email: string;
   role: 'STUDENT' | 'ADMIN';
@@ -7,10 +7,10 @@ export interface User {
   createdAt: string;
 }
 
-export interface AuthResponse { accessToken: string; user: User }
+export interface AuthResponse { user: User }
 
 export interface Course {
-  id: string;
+  code: string;
   name: string;
   category: string;
   instructor: string;
@@ -24,3 +24,13 @@ export interface Course {
 }
 
 export interface Page<T> { items: T[]; total: number; page: number; limit: number }
+
+export interface Enrollment {
+  code: string;
+  courseCode: string;
+  studentCode: string;
+  status: 'ENROLLED' | 'CANCELLED';
+  enrolledAt: string;
+  enrolledDate: string;
+  course: Course;
+}

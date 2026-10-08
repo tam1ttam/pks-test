@@ -18,10 +18,6 @@
       "value": ""
     },
     {
-      "key": "accessToken",
-      "value": ""
-    },
-    {
       "key": "googleCredential",
       "value": ""
     }
@@ -66,8 +62,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Login succeeds', () => pm.response.to.have.status(200));",
-              "if (pm.response.code === 200) pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"
+              "pm.test('Login succeeds', () => pm.response.to.have.status(200));"
             ]
           }
         }
@@ -78,16 +73,6 @@
       "request": {
         "method": "GET",
         "header": [],
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{accessToken}}",
-              "type": "string"
-            }
-          ]
-        },
         "url": "{{baseUrl}}/auth/me"
       }
     },
@@ -101,16 +86,6 @@
             "value": "application/json"
           }
         ],
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{accessToken}}",
-              "type": "string"
-            }
-          ]
-        },
         "url": "{{baseUrl}}/users/me",
         "body": {
           "mode": "raw",
@@ -128,16 +103,6 @@
             "value": "application/json"
           }
         ],
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{accessToken}}",
-              "type": "string"
-            }
-          ]
-        },
         "url": "{{baseUrl}}/users/me",
         "body": {
           "mode": "raw",
@@ -192,16 +157,6 @@
       "request": {
         "method": "POST",
         "header": [],
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{accessToken}}",
-              "type": "string"
-            }
-          ]
-        },
         "url": "{{baseUrl}}/auth/logout"
       }
     },
@@ -210,16 +165,6 @@
       "request": {
         "method": "GET",
         "header": [],
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{accessToken}}",
-              "type": "string"
-            }
-          ]
-        },
         "url": "{{baseUrl}}/auth/me"
       }
     }

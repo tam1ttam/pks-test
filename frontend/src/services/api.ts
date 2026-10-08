@@ -1,15 +1,7 @@
 import axios from 'axios';
-import { TOKEN_KEY } from '../constants/storage';
-
-export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3030/api', timeout: 15000 });
-api.interceptors.request.use(config => {
-  const token = sessionStorage.getItem(TOKEN_KEY);
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3030/api', timeout: 15000, withCredentials: true });
 api.interceptors.response.use(response => response, error => {
-  if (error.response?.status === 401 && error.config?.headers?.Authorization && !error.config?.url?.startsWith('/auth/login')) {
-    sessionStorage.removeItem(TOKEN_KEY);
+  if (error.response?.status === 401 && !error.config?.url?.startsWith('/auth/login')) {
     window.dispatchEvent(new Event('pks:unauthorized'));
   }
   return Promise.reject(error);
