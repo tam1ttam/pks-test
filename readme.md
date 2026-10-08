@@ -137,7 +137,7 @@ Cloudinary cần ba biến `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUD
 | Ứng dụng | Route | Nội dung |
 | --- | --- | --- |
 | Client | `/login`, `/register` | Xác thực học viên |
-| Client | `/about` | Mở README của repository |
+| Client | `/about` | Trang giới thiệu và README nội bộ của dự án |
 | Client | `/` | Trang chủ, thống kê và khóa học đang mở |
 | Client | `/courses`, `/courses/:code` | Danh sách/bộ lọc và chi tiết khóa học |
 | Client | `/my-courses` | Các khóa học của học viên |
