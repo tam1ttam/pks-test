@@ -42,3 +42,9 @@ Thumbs.db
 ![rR][eE][aA][dD][mM][eE].[mM][dD]
 
 *.pdf
+
+# Local database exports (keep the reviewed migration/seed script)
+*.sql
+*.dump
+*.backup
+!backend/migration.sql
